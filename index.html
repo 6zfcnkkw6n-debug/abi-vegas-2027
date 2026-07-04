@@ -497,15 +497,14 @@ footer strong{color:var(--text)}
   <div class="vorbestell-box reveal">
     <h3 class="vorbestell-title">🔮 Interesse für nächstes Jahr anmelden</h3>
     <p class="vorbestell-desc">Karten bleiben komplett physisch, verkauft an der Schule. Trag dich hier nur unverbindlich ein – wir schicken Bescheid, sobald der Verkauf startet, und du bekommst einen digitalen Abholcode als Erinnerung.</p>
-    <form id="vorbestellForm" class="vorbestell-form" onsubmit="handleVorbestellung(event)" name="kartenvorbestellung" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-      <input type="hidden" name="form-name" value="kartenvorbestellung">
-      <p style="display:none"><label>Nicht ausfüllen: <input name="bot-field"></label></p>
-      <div class="form-field"><label>Name</label><input type="text" name="name" id="vbName" required placeholder="Dein Name"></div>
-      <div class="form-field"><label>E-Mail</label><input type="email" name="email" id="vbEmail" required placeholder="du@mail.de"></div>
-      <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Interesse anmelden</button>
+    <form id="vorbestellForm" class="vorbestell-form" onsubmit="handleVorbestellung(event)">
+      <div class="form-field"><label>Name</label><input type="text" id="vbName" required placeholder="Dein Name"></div>
+      <div class="form-field"><label>E-Mail</label><input type="email" id="vbEmail" required placeholder="du@mail.de"></div>
+      <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center" id="vbSubmitBtn">Interesse anmelden</button>
     </form>
     <div id="vorbestellResult" style="display:none;text-align:center;margin-top:1.2rem">
-      <div id="vbQrcode" style="display:flex;justify-content:center;margin-bottom:.8rem"></div>
+      <div id="vbQrcode" style="display:flex;justify-content:center;margin-bottom:.8rem;cursor:pointer" onclick="enlargeVbQrcode()"></div>
+      <p style="font-size:.7rem;color:var(--text-muted);margin-bottom:.6rem">🔍 Antippen zum Vergrößern</p>
       <p style="font-size:.85rem;color:var(--text-muted)">✓ Danke, <strong id="vbNameOut"></strong>! Zeig diesen Code beim Verkauf in der Schule.</p>
     </div>
   </div>
@@ -1211,25 +1210,40 @@ function spinSlot(){
 }
 
 // ── VORBESTELLUNG (Sammelkarten nächstes Jahr) ──
-function handleVorbestellung(e){
+let vbCurrentCode='';
+async function handleVorbestellung(e){
   e.preventDefault();
   const name=document.getElementById('vbName').value.trim();
   const email=document.getElementById('vbEmail').value.trim();
   if(!name||!email){showToast('⚠️ Bitte Name und E-Mail eingeben!');return;}
-  const form=document.getElementById('vorbestellForm');
-  try{
-    const data=new URLSearchParams(new FormData(form)).toString();
-    fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:data}).catch(()=>{});
-  }catch(err){}
+  const btn=document.getElementById('vbSubmitBtn');
+  btn.disabled=true;btn.textContent='Wird angemeldet...';
   const code='ABIVEGAS-'+Math.random().toString(36).slice(2,8).toUpperCase();
+  const{error}=await sb.from('kartenvorbestellungen').insert({name,email,code});
+  btn.disabled=false;btn.textContent='Interesse anmelden';
+  if(error){
+    if(error.code==='23505'){ // unique_violation
+      showToast('⚠️ Diese E-Mail oder dieser Name ist schon angemeldet');
+    }else{
+      console.warn('Vorbestellung fehlgeschlagen:',error);
+      showToast('⚠️ Anmeldung fehlgeschlagen, bitte nochmal versuchen');
+    }
+    return;
+  }
+  vbCurrentCode=code;
   const qrWrap=document.getElementById('vbQrcode');
   qrWrap.innerHTML='';
   if(window.QRCode){new QRCode(qrWrap,{text:code,width:140,height:140,colorDark:'#1A1A1A',colorLight:'#ffffff'});}
   else{qrWrap.innerHTML=`<div style="font-size:.75rem;color:var(--text-muted)">Code: ${code}</div>`;}
   document.getElementById('vbNameOut').textContent=name;
-  form.style.display='none';
+  document.getElementById('vorbestellForm').style.display='none';
   document.getElementById('vorbestellResult').style.display='block';
   showToast('Angemeldet ✓');
+}
+function enlargeVbQrcode(){
+  const canvas=document.querySelector('#vbQrcode canvas');
+  if(canvas){openImageViewer([canvas.toDataURL()],0);}
+  else{showToast(vbCurrentCode||'Kein Code verfügbar');}
 }
 
 // ── GALERIE ──
