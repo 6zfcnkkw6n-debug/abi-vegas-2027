@@ -93,7 +93,7 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .teaser-avatar:first-child{margin-left:0}
 .schueler-teaser-quote{font-family:var(--font-display);font-size:clamp(1.2rem,3vw,1.6rem);font-weight:300;font-style:italic;color:var(--text);margin-bottom:.6rem;line-height:1.3}
 .schueler-teaser-sub{font-size:.88rem;color:var(--text-muted);margin-bottom:1.8rem;line-height:1.6}
-.schueler-modal-search{display:flex;gap:.6rem;margin-bottom:1.2rem}
+.schueler-modal-search{display:flex;gap:.6rem;margin-bottom:1.2rem;position:sticky;top:0;background:var(--bg-card);padding:.6rem 0;z-index:5}
 .schueler-modal-search input{flex:1;padding:.65rem 1rem;border:1px solid var(--border);border-radius:8px;font-family:var(--font-body);font-size:16px;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s}
 .schueler-modal-search input:focus{border-color:var(--accent)}
 .schueler-modal-count{font-size:.78rem;color:var(--text-muted);margin-bottom:1rem}
@@ -270,6 +270,7 @@ footer strong{color:var(--text)}
   .countdown-grid{grid-template-columns:1fr 1fr}
   .cd-num{font-size:1.6rem}
   .schueler-modal-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+  .modal-overlay{align-items:flex-start;padding-top:1.5rem}
 }
 </style>
 </head>
