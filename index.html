@@ -232,6 +232,8 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .inbox-actions{display:flex;gap:.4rem;flex-shrink:0}
 .inbox-actions button{background:none;border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:.85rem;line-height:1;transition:all .2s}
 .inbox-actions button:hover{border-color:var(--accent)}
+.inbox-trash-toggle{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--text-muted);opacity:.7;transition:opacity .2s}
+.inbox-trash-toggle:hover,.inbox-trash-toggle.active{opacity:1}
 .modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(10,8,6,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .3s}
 .modal-overlay.open{opacity:1;pointer-events:all}
 .modal{background:var(--bg-card);border-radius:var(--radius);width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.2);transform:translateY(20px);transition:transform .3s,background-color .4s ease;overflow:hidden;max-height:90vh;overflow-y:auto}
@@ -272,6 +274,19 @@ footer strong{color:var(--text)}
   .nav-links{display:none !important}
   .nav-hamburger{display:flex}
 }
+@media(max-width:600px){
+  nav>div{gap:.35rem !important}
+  .nav-theme-btn,.nav-bell-btn{padding:.35rem .5rem}
+  .nav-admin-btn{padding:.35rem .5rem}
+}
+@media(max-width:480px){
+  nav{padding:.8rem .9rem}
+  nav>div{gap:.28rem !important}
+  .nav-admin-label{display:none}
+  .nav-admin-btn{padding:.35rem .45rem}
+  .nav-theme-btn,.nav-bell-btn{padding:.32rem .45rem;font-size:.9rem}
+  .nav-logo{font-size:.95rem}
+}
 @media(max-width:768px){
   nav{padding:.9rem 1.2rem}
   section{padding:3.5rem 1.2rem}
@@ -298,7 +313,7 @@ footer strong{color:var(--text)}
   <div style="display:flex;align-items:center;gap:.6rem">
     <button class="nav-theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Hell/Dunkel umschalten">🌙</button>
     <button class="nav-bell-btn" id="bellBtn" onclick="openInbox()" aria-label="Nachrichten">🔔<span class="nav-bell-badge" id="inboxBadge" style="display:none">0</span></button>
-    <button class="nav-admin-btn" id="adminBtn" onclick="toggleAdmin()">⚙ Admin</button>
+    <button class="nav-admin-btn" id="adminBtn" onclick="toggleAdmin()">⚙<span class="nav-admin-label"> Admin</span></button>
     <button class="nav-hamburger" id="hamburger" onclick="toggleMobileMenu()" aria-label="Menü">
       <span></span><span></span><span></span>
     </button>
@@ -332,7 +347,10 @@ footer strong{color:var(--text)}
 <div class="modal-overlay" id="inboxModal">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
-      <div class="modal-title">🔔 Nachrichten</div>
+      <div class="modal-title" id="inboxTitle">🔔 Nachrichten</div>
+      <div style="position:absolute;top:1.3rem;right:3.2rem">
+        <button class="inbox-trash-toggle" id="inboxTrashToggle" onclick="toggleInboxView()" title="Papierkorb">🗑</button>
+      </div>
       <button class="modal-close" onclick="closeModal('inboxModal')">✕</button>
     </div>
     <div class="modal-body" id="inboxList"></div>
@@ -1270,11 +1288,12 @@ function updateCountdowns(){
   });
 }
 // ── NACHRICHTEN-INBOX ──
+let inboxView='active';
 function loadInbox(){
   let inbox=[];
   try{inbox=JSON.parse(localStorage.getItem('inboxMessages')||'[]');}catch(e){inbox=[];}
   const today=new Date().toISOString().slice(0,10);
-  const filtered=inbox.filter(m=>m.date===today); // alte Nachrichten verschwinden am nächsten Tag
+  const filtered=inbox.filter(m=>m.date===today); // alte Nachrichten (auch im Papierkorb) verschwinden am nächsten Tag
   if(filtered.length!==inbox.length)localStorage.setItem('inboxMessages',JSON.stringify(filtered));
   return filtered;
 }
@@ -1284,27 +1303,33 @@ function addInboxMessage(baseId,title,text){
   const id=baseId+'-'+today;
   const inbox=loadInbox();
   if(inbox.some(m=>m.id===id))return;
-  inbox.push({id,title,text,date:today,read:false});
+  inbox.push({id,title,text,date:today,read:false,deleted:false});
   saveInbox(inbox);
   updateInboxBadge();
 }
 function updateInboxBadge(){
   const inbox=loadInbox();
-  const unread=inbox.filter(m=>!m.read).length;
+  const unread=inbox.filter(m=>!m.read&&!m.deleted).length;
   const badge=document.getElementById('inboxBadge');
   if(!badge)return;
   badge.style.display=unread>0?'flex':'none';
   badge.textContent=unread;
 }
 function renderInbox(){
-  const inbox=loadInbox();
+  const inbox=loadInbox().filter(m=>inboxView==='trash'?m.deleted:!m.deleted);
   const list=document.getElementById('inboxList');
-  if(!inbox.length){list.innerHTML='<p style="text-align:center;color:var(--text-muted);font-size:.85rem;padding:1rem 0">Keine Nachrichten 📭</p>';return;}
+  if(!inbox.length){
+    list.innerHTML=`<p style="text-align:center;color:var(--text-muted);font-size:.85rem;padding:1rem 0">${inboxView==='trash'?'Papierkorb ist leer 🗑':'Keine Nachrichten 📭'}</p>`;
+    return;
+  }
   list.innerHTML='';
   [...inbox].reverse().forEach(m=>{
     const row=document.createElement('div');
     row.className='inbox-entry'+(m.read?' inbox-read':'');
-    row.innerHTML=`<div class="inbox-text"><strong>${m.title}</strong><br>${m.text}</div><div class="inbox-actions"><button onclick="markInboxRead('${m.id}')" title="${m.read?'Gelesen':'Als gelesen markieren'}">${m.read?'✓':'☐'}</button><button onclick="deleteInboxMessage('${m.id}')" title="Löschen">🗑</button></div>`;
+    const actions=inboxView==='trash'
+      ?`<button onclick="restoreInboxMessage('${m.id}')" title="Wiederherstellen">↩</button><button onclick="permanentlyDeleteInboxMessage('${m.id}')" title="Endgültig löschen">❌</button>`
+      :`<button onclick="markInboxRead('${m.id}')" title="${m.read?'Gelesen':'Als gelesen markieren'}">${m.read?'✓':'☐'}</button><button onclick="deleteInboxMessage('${m.id}')" title="Löschen">🗑</button>`;
+    row.innerHTML=`<div class="inbox-text"><strong>${m.title}</strong><br>${m.text}</div><div class="inbox-actions">${actions}</div>`;
     list.appendChild(row);
   });
 }
@@ -1313,10 +1338,31 @@ function markInboxRead(id){
   saveInbox(inbox);renderInbox();updateInboxBadge();
 }
 function deleteInboxMessage(id){
+  const inbox=loadInbox().map(m=>m.id===id?{...m,deleted:true}:m);
+  saveInbox(inbox);renderInbox();updateInboxBadge();
+}
+function restoreInboxMessage(id){
+  const inbox=loadInbox().map(m=>m.id===id?{...m,deleted:false}:m);
+  saveInbox(inbox);renderInbox();updateInboxBadge();
+}
+function permanentlyDeleteInboxMessage(id){
   const inbox=loadInbox().filter(m=>m.id!==id);
   saveInbox(inbox);renderInbox();updateInboxBadge();
 }
-function openInbox(){renderInbox();openModal('inboxModal');}
+function toggleInboxView(){
+  inboxView=inboxView==='active'?'trash':'active';
+  document.getElementById('inboxTitle').textContent=inboxView==='active'?'🔔 Nachrichten':'🗑 Papierkorb';
+  document.getElementById('inboxTrashToggle').textContent=inboxView==='active'?'🗑':'↩';
+  document.getElementById('inboxTrashToggle').title=inboxView==='active'?'Papierkorb ansehen':'Zurück zu Nachrichten';
+  renderInbox();
+}
+function openInbox(){
+  inboxView='active';
+  document.getElementById('inboxTitle').textContent='🔔 Nachrichten';
+  document.getElementById('inboxTrashToggle').textContent='🗑';
+  document.getElementById('inboxTrashToggle').title='Papierkorb ansehen';
+  renderInbox();openModal('inboxModal');
+}
 
 function mottoInReminderWindow(){
   if(new URLSearchParams(location.search).get('testMotto')==='1')return true; // Test-Modus: ?testMotto=1 an die URL anhängen
