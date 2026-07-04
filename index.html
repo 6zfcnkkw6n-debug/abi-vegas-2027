@@ -471,7 +471,7 @@ footer strong{color:var(--text)}
   </div>
 </section>
 
-<footer><strong>Abi Vegas 2027 · Sportschule Halle</strong><br><span style="display:block;margin-top:.3rem">Mit ❤️ von der Klasse gebaut · Auto-Deploy Test ✅</span><span class="footer-suits">♠ ♥ ♦ ♣</span></footer>
+<footer><strong>Abi Vegas 2027 · Sportschule Halle</strong><br><span style="display:block;margin-top:.3rem">Mit ❤️ von der Klasse gebaut</span><span class="footer-suits">♠ ♥ ♦ ♣</span></footer>
 
 <!-- MOTTOWOCHE MODAL -->
 <div class="modal-overlay" id="mottowocheModal">
@@ -576,7 +576,13 @@ footer strong{color:var(--text)}
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ── SUPABASE ──
+const SUPABASE_URL='https://ccumnubmscprtlyeeocg.supabase.co';
+const SUPABASE_KEY='sb_publishable_b_zsRCB3eW2a6ByB4GAe5A_cPOd15jc';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
 // ✏️ MOTTOWOCHE
 const MOTTOTAGE=[
   {emoji:'🎭',tag:'Montag',    datum:'2027-03-30T08:00:00',motto:'Motto folgt noch...',desc:''},
@@ -597,8 +603,8 @@ const PRUEFUNGEN=[
   {emoji:'🏃',fach:'Sport (Prakt.)', datum:'2027-05-20T08:00:00'},
 ];
 
-// ✏️ SCHÜLER – 42 Personen
-const SCHUELER=[
+// ✏️ SCHÜLER – 42 Personen (Fallback, falls Supabase nicht erreichbar ist)
+let SCHUELER=[
   {name:'Julius Ulrich',   nick:'Uli',       motto:'"If you can dream it, you can do it."',sport:'🏃 110m Hürdenlauf',farbe:'#4A90D9',profilBild:'',bio:'Julius gibt alles auf der Tartanbahn – und danach noch mal an den Tasten. Wer ihn morgens vor 9 Uhr sieht, hat selten Glück.',facts:['🎹 Spielt Klavier','🎧 DJ als Sidequest','😴 Schläft gern mal länger'],sportImg1:'',sportImg1Label:'Bild 1',sportImg2:'',sportImg2Label:'Bild 2'},
   {name:'Vorname Nachname',nick:'Spitzname', motto:'"Motto hier."',sport:'🏊 Sportart',farbe:'#D94A7E',profilBild:'',bio:'Beschreibung folgt.',facts:['🏆 Fakt 1','🎯 Fakt 2','😄 Fakt 3'],sportImg1:'',sportImg1Label:'Bild 1',sportImg2:'',sportImg2Label:'Bild 2'},
   {name:'Vorname Nachname',nick:'Spitzname', motto:'"Motto hier."',sport:'🏋️ Sportart',farbe:'#4AD96D',profilBild:'',bio:'Beschreibung folgt.',facts:['🏆 Fakt 1','🎯 Fakt 2','😄 Fakt 3'],sportImg1:'',sportImg1Label:'Bild 1',sportImg2:'',sportImg2Label:'Bild 2'},
@@ -711,11 +717,7 @@ const GALERIE_KATEGORIEN=[
 
 // ── STATE ──
 let kasseValue=1240; const KASSE_GOAL=4000;
-let gbEntries=[
-  {name:'Frau Hoffmann (Klassenlehrerin)',text:'Ich bin so stolz auf euch alle! Auf ein tolles Abitur! 🌟',date:'10. März 2026'},
-  {name:'Familie Müller',text:'Sophie, wir glauben an dich! Ihr seid die beste Klasse!',date:'12. März 2026'},
-  {name:'Herr Becker (Sportlehrer)',text:'Was für eine Truppe! Viel Erfolg!',date:'14. März 2026'},
-];
+let gbEntries=[]; // wird aus Supabase geladen
 let adminMode=false;
 let kasseSources=[680,320,240,0];
 let kasseEditMode=false;
@@ -788,7 +790,43 @@ function toggleKasseEdit(){
   }
   const btn=document.getElementById('kasseEditToggleBtn');
   if(btn)btn.textContent=kasseEditMode?'✓ Fertig':'✏️ Abikasse bearbeiten';
-  if(!kasseEditMode)showToast('Abikasse gespeichert ✓');
+  if(!kasseEditMode)saveKasseToDb();
+}
+
+// ── SUPABASE DATA ──
+async function loadKasseFromDb(){
+  const{data,error}=await sb.from('kasse').select('*').eq('id',1).single();
+  if(error||!data){console.warn('Kasse-Laden fehlgeschlagen, nutze lokalen Stand:',error);return;}
+  kasseSources=[Number(data.basare),Number(data.eltern),Number(data.verkaeufe),Number(data.spenden)];
+  updateKasseUI();
+}
+async function saveKasseToDb(){
+  const[basare,eltern,verkaeufe,spenden]=kasseSources;
+  const{error}=await sb.from('kasse').update({basare,eltern,verkaeufe,spenden}).eq('id',1);
+  if(error){
+    console.warn('Kasse-Speichern fehlgeschlagen:',error);
+    showToast('⚠️ Nur lokal gespeichert – Login zum dauerhaften Speichern fehlt noch');
+  }else{
+    showToast('Abikasse gespeichert ✓');
+  }
+}
+async function loadSchuelerFromDb(){
+  const{data,error}=await sb.from('schueler').select('*').order('idx',{ascending:true});
+  if(error||!data||!data.length){console.warn('Schüler-Laden fehlgeschlagen, nutze lokalen Stand:',error);return;}
+  SCHUELER=data.map(s=>({
+    name:s.name,nick:s.nick||'',motto:s.motto||'',sport:s.sport||'',farbe:s.farbe||'#4A90D9',
+    bio:s.bio||'',facts:s.facts||[],profilBild:s.profil_bild_url||'',
+    sportImg1:s.sport_img1_url||'',sportImg1Label:s.sport_img1_label||'Bild 1',
+    sportImg2:s.sport_img2_url||'',sportImg2Label:s.sport_img2_label||'Bild 2',
+  }));
+}
+async function loadGaestebuchFromDb(){
+  const{data,error}=await sb.from('gaestebuch').select('*').order('created_at',{ascending:true});
+  if(error||!data){console.warn('Gästebuch-Laden fehlgeschlagen:',error);return;}
+  gbEntries=data.map(e=>({
+    name:e.name,text:e.message,
+    date:new Date(e.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'long',year:'numeric'}),
+  }));
 }
 
 // ── COUNTDOWN HELPER ──
@@ -1157,10 +1195,12 @@ function renderGb(){
     c.appendChild(el);
   });
 }
-function addGbEntry(){
+async function addGbEntry(){
   const name=document.getElementById('gbName').value.trim();
   const text=document.getElementById('gbText').value.trim();
   if(!name||!text){showToast('⚠️ Bitte Name und Nachricht eingeben!');return;}
+  const{error}=await sb.from('gaestebuch').insert({name,message:text});
+  if(error){console.warn('Gästebuch-Speichern fehlgeschlagen:',error);showToast('⚠️ Eintrag konnte nicht gespeichert werden');return;}
   gbEntries.push({name,text,date:new Date().toLocaleDateString('de-DE',{day:'numeric',month:'long',year:'numeric'})});
   renderGb();document.getElementById('gbName').value='';document.getElementById('gbText').value='';
   showToast('Eintrag hinzugefügt ✓');
@@ -1211,8 +1251,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.documentElement.classList.add('dark');
     document.getElementById('themeBtn').textContent='☀️';
   }
-  initSchueler();initSammelkarten();initGalerie();renderGb();updateKasseUI();
-  setTimeout(()=>{document.getElementById('kasseBar').style.width=Math.min(100,Math.round(kasseValue/KASSE_GOAL*100))+'%';},800);
+  Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb()]).finally(()=>{
+    initSchueler();initSammelkarten();initGalerie();renderGb();updateKasseUI();
+    setTimeout(()=>{document.getElementById('kasseBar').style.width=Math.min(100,Math.round(kasseValue/KASSE_GOAL*100))+'%';},800);
+  });
   updateCountdowns();
   setInterval(()=>{
     updateCountdowns();
