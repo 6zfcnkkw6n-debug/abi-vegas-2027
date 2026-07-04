@@ -121,9 +121,6 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .sm-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
 .sm-img-label{font-size:.72rem;color:var(--text-muted);text-align:center;margin-top:.4rem}
 /* REMINDER BANNER */
-.reminder-banner{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:150;background:var(--accent);color:#fff;padding:.6rem 1.1rem;border-radius:30px;font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:.7rem;box-shadow:var(--shadow-h);max-width:88vw;text-align:left}
-.reminder-banner button{background:none;border:none;color:#fff;cursor:pointer;font-size:1rem;line-height:1;opacity:.8;flex-shrink:0}
-.reminder-banner button:hover{opacity:1}
 /* PRÜFUNGEN & MOTTOWOCHE */
 .pf-grid{display:flex;flex-direction:column;gap:.7rem}
 .pf-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.9rem 1.2rem;gap:1rem;flex-wrap:wrap}
@@ -292,9 +289,18 @@ footer strong{color:var(--text)}
   </div>
 </nav>
 
-<div class="reminder-banner" id="reminderBanner" style="display:none">
-  <span id="reminderText"></span>
-  <button onclick="dismissReminder()" aria-label="Schließen">✕</button>
+<div class="modal-overlay" id="mottoReminderModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">🎭 Mottowoche rückt näher!</div>
+      <button class="modal-close" onclick="closeModal('mottoReminderModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:1rem;margin-bottom:.9rem;line-height:1.5">Seid ihr bereit für die ersten Kostüme? 👀</p>
+      <p style="font-size:.95rem;color:var(--text-muted);line-height:1.5">Und mal ehrlich unter uns: <strong style="color:var(--text)">Hast du dein Kostüm schon? 😉</strong></p>
+      <button class="btn btn-primary" style="margin-top:1.4rem;width:100%" onclick="closeModal('mottoReminderModal')">Alles klar, bin vorbereitet 🎉</button>
+    </div>
+  </div>
 </div>
 
 <div class="mobile-menu" id="mobileMenu">
@@ -725,7 +731,6 @@ let kasseEditMode=false;
 let revealedKarten=new Set();
 let activeRarityFilter=null;
 let lastKassePct=0;
-let reminderDismissed=false;
 let karteNumbers={};
 const RARITY_TOTALS={common:800,rare:400,epic:150,legendary:40,mythic:5};
 const SLOT_SYMBOLS=['🍒','🍋','🔔','⭐','7️⃣','🍀','♠️'];
@@ -1224,22 +1229,16 @@ function updateCountdowns(){
     const pad=n=>String(n).padStart(2,'0');
     timer.innerHTML=`<div class="cd-unit"><span class="cd-num">${years}</span><span class="cd-unit-label">Jahre</span></div><div class="cd-unit"><span class="cd-num">${months}</span><span class="cd-unit-label">Mon.</span></div><div class="cd-unit"><span class="cd-num">${days}</span><span class="cd-unit-label">Tage</span></div><div class="cd-unit"><span class="cd-num">${pad(h)}</span><span class="cd-unit-label">Std</span></div>`;
   });
-  checkReminder();
 }
-function checkReminder(){
-  if(reminderDismissed)return;
+function checkMottoReminder(){
   const mottoTarget=new Date('2027-03-30T08:00:00');
   const diffDays=Math.floor((mottoTarget-new Date())/86400000);
-  const banner=document.getElementById('reminderBanner');
-  if(!banner)return;
-  if(diffDays>=0&&diffDays<=4){
-    document.getElementById('reminderText').textContent=`🎭 Nur noch ${diffDays} Tag${diffDays===1?'':'e'} bis zur Mottowoche – Kostüm schon besorgt?`;
-    banner.style.display='flex';
-  }else{
-    banner.style.display='none';
-  }
+  if(diffDays<0||diffDays>4)return; // nur in den letzten 4 Tagen vorher
+  const today=new Date().toISOString().slice(0,10);
+  if(localStorage.getItem('mottoReminderShown')===today)return; // schon heute gezeigt
+  localStorage.setItem('mottoReminderShown',today);
+  openModal('mottoReminderModal');
 }
-function dismissReminder(){reminderDismissed=true;document.getElementById('reminderBanner').style.display='none';}
 
 // ── SCROLL & REVEAL ──
 const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.08,rootMargin:'0px 0px -40px 0px'});
@@ -1263,6 +1262,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(document.getElementById('pruefungenModal').classList.contains('open'))renderPruefungen();
   },1000);
   setTimeout(()=>document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=(i%4)*80+'ms';obs.observe(el);}),100);
+  setTimeout(checkMottoReminder,1500);
 });
 </script>
 </body>
