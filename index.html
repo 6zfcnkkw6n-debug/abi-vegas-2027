@@ -1249,6 +1249,7 @@ function updateCountdowns(){
   });
 }
 function mottoInReminderWindow(){
+  if(new URLSearchParams(location.search).get('testMotto')==='1')return true; // Test-Modus: ?testMotto=1 an die URL anhängen
   const mottoTarget=new Date('2027-03-30T08:00:00');
   const diffDays=Math.floor((mottoTarget-new Date())/86400000);
   return diffDays>=0&&diffDays<=4;
