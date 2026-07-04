@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light dark">
 <title>Abi Vegas 2027 – Sportschule Halle</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#171512">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Abi Vegas">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -188,6 +195,11 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .galerie-cat-count{font-size:.75rem;color:var(--text-muted)}
 .galerie-cat-badge{position:absolute;top:.8rem;right:.8rem;background:rgba(26,26,26,.65);color:#fff;font-size:.72rem;font-weight:600;padding:.25rem .6rem;border-radius:20px;backdrop-filter:blur(4px)}
 .gallery-lightbox{position:fixed;inset:0;z-index:700;background:rgba(10,10,10,.96);display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .3s}
+.img-viewer-overlay{background:rgba(8,7,6,.94);z-index:600}
+.img-viewer-close{position:fixed;top:1.2rem;right:1.5rem;background:none;border:none;color:#fff;font-size:1.8rem;cursor:pointer;z-index:2;opacity:.85}
+.img-viewer-close:hover{opacity:1}
+.img-viewer-main{position:relative;display:flex;align-items:center;justify-content:center;max-width:95vw;max-height:90vh}
+.img-viewer-img{max-width:88vw;max-height:85vh;border-radius:10px;object-fit:contain;box-shadow:0 10px 50px rgba(0,0,0,.5);cursor:default}
 .gallery-lightbox.open{opacity:1;pointer-events:all}
 .gallery-lb-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.1)}
 .gallery-lb-title{font-family:var(--font-display);font-size:1.3rem;color:#fff;font-weight:300}
@@ -286,6 +298,11 @@ footer strong{color:var(--text)}
   .nav-admin-btn{padding:.35rem .45rem}
   .nav-theme-btn,.nav-bell-btn{padding:.32rem .45rem;font-size:.9rem}
   .nav-logo{font-size:.95rem}
+  .countdown-grid{grid-template-columns:1fr}
+  .cd-timer{gap:.4rem;justify-content:space-between}
+  .cd-num{font-size:1.7rem}
+  .cd-unit-label{font-size:.6rem}
+  .countdown-card{padding:1.4rem 1.2rem}
 }
 @media(max-width:768px){
   nav{padding:.9rem 1.2rem}
@@ -296,6 +313,8 @@ footer strong{color:var(--text)}
   .suit-decor{display:none}
   .countdown-grid{grid-template-columns:1fr 1fr}
   .cd-num{font-size:1.6rem}
+  .cd-timer{gap:.5rem}
+  .countdown-card{padding:1.5rem 1.1rem}
   .schueler-modal-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
   .modal-overlay{align-items:flex-start;padding-top:1.5rem}
 }
@@ -595,6 +614,16 @@ footer strong{color:var(--text)}
   </div>
 </div>
 
+<!-- STECKBRIEF BILD-VIEWER -->
+<div class="modal-overlay img-viewer-overlay" id="imgViewerModal">
+  <button class="img-viewer-close" onclick="closeModal('imgViewerModal')" aria-label="Schließen">✕</button>
+  <div class="img-viewer-main">
+    <button class="gallery-lb-nav prev" id="imgViewerPrevBtn" onclick="imgViewerNav(-1)" style="display:none">‹</button>
+    <img id="imgViewerImg" src="" alt="" class="img-viewer-img">
+    <button class="gallery-lb-nav next" id="imgViewerNextBtn" onclick="imgViewerNav(1)" style="display:none">›</button>
+  </div>
+</div>
+
 <!-- GALERIE LIGHTBOX -->
 <div class="gallery-lightbox" id="galleryLightbox">
   <div class="gallery-lb-header">
@@ -807,8 +836,10 @@ document.querySelectorAll('.modal-overlay').forEach(el=>{
 function toggleTheme(){
   document.body.classList.toggle('dark');
   document.documentElement.classList.toggle('dark');
+  const isDark=document.body.classList.contains('dark');
   const btn=document.getElementById('themeBtn');
-  btn.textContent=document.body.classList.contains('dark')?'☀️':'🌙';
+  btn.textContent=isDark?'☀️':'🌙';
+  localStorage.setItem('theme',isDark?'dark':'light');
 }
 
 // ── KASSE ──
@@ -1010,6 +1041,7 @@ function filterSchueler(query){
   const count=document.getElementById('schuelerCount');
   if(count)count.textContent=q?`${visible} Treffer von ${SCHUELER.length}`:`${SCHUELER.length} Personen`;
 }
+let currentSchuelerImgs=[];
 function openSchuelerModal(i){
   const s=SCHUELER[i];
   const inits=s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
@@ -1017,20 +1049,45 @@ function openSchuelerModal(i){
   document.getElementById('smSub').textContent=s.sport+' · Abi Vegas 2027';
   const factsHtml=s.facts.map(f=>`<span class="sm-fact">${f}</span>`).join('');
   const img1Id=`smImg1_${i}`,img2Id=`smImg2_${i}`;
+  currentSchuelerImgs=[s.profilBild,s.sportImg1,s.sportImg2].filter(Boolean);
   const avatarHtml=s.profilBild
-    ?`<div class="sm-avatar" style="background:${s.farbe};padding:0;overflow:hidden"><img src="${s.profilBild}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>`
+    ?`<div class="sm-avatar" style="background:${s.farbe};padding:0;overflow:hidden;cursor:pointer"><img src="${s.profilBild}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>`
     :`<div class="sm-avatar" style="background:${s.farbe}">${inits}</div>`;
   document.getElementById('smBody').innerHTML=`<div class="sm-top">${avatarHtml}<div class="sm-info"><h2>${s.name}</h2><div class="sm-nick">„${s.nick}"</div><span class="sm-sport-tag">${s.sport}</span></div></div><div class="sm-motto">${s.motto}</div><p class="sm-bio">${s.bio}</p><div class="sm-facts">${factsHtml}</div><div class="sm-images"><div><div class="sm-img-wrap" id="${img1Id}"></div><div class="sm-img-label">${s.sportImg1Label}</div></div><div><div class="sm-img-wrap" id="${img2Id}"></div><div class="sm-img-label">${s.sportImg2Label}</div></div></div>`;
+  if(s.profilBild){
+    const avatarEl=document.querySelector('#smBody .sm-avatar');
+    if(avatarEl)avatarEl.onclick=()=>openImageViewer(currentSchuelerImgs,currentSchuelerImgs.indexOf(s.profilBild));
+  }
   const palette=['#5B7FA6','#A66B3A','#5B9E6B','#9E5B7A','#5B9EA0','#8B7355','#6B5BA6','#A65B3A'];
   [{id:img1Id,src:s.sportImg1,emoji:s.sport.split(' ')[0]},{id:img2Id,src:s.sportImg2,emoji:'🏅'}].forEach((item,j)=>{
     const wrap=document.getElementById(item.id);
-    if(item.src){wrap.innerHTML=`<img src="${item.src}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`;}
+    if(item.src){
+      wrap.innerHTML=`<img src="${item.src}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`;
+      wrap.style.cursor='pointer';
+      wrap.onclick=()=>openImageViewer(currentSchuelerImgs,currentSchuelerImgs.indexOf(item.src));
+    }
     else{
       const cv=document.createElement('canvas');cv.width=400;cv.height=300;cv.style.width='100%';cv.style.height='100%';wrap.appendChild(cv);
       drawThumb(cv,palette[(i+j*3)%palette.length],item.emoji,'Foto folgt');
     }
   });
   openModal('schuelerModal');
+}
+let imgViewerList=[],imgViewerIndex=0;
+function openImageViewer(list,idx){
+  imgViewerList=list;imgViewerIndex=Math.max(0,idx);
+  updateImgViewer();
+  openModal('imgViewerModal');
+}
+function updateImgViewer(){
+  document.getElementById('imgViewerImg').src=imgViewerList[imgViewerIndex]||'';
+  const multi=imgViewerList.length>1;
+  document.getElementById('imgViewerPrevBtn').style.display=multi?'flex':'none';
+  document.getElementById('imgViewerNextBtn').style.display=multi?'flex':'none';
+}
+function imgViewerNav(dir){
+  imgViewerIndex=(imgViewerIndex+dir+imgViewerList.length)%imgViewerList.length;
+  updateImgViewer();
 }
 function backToSchuelerList(){
   closeModal('schuelerModal');
@@ -1247,6 +1304,11 @@ document.addEventListener('keydown',e=>{
     if(e.key==='ArrowRight')galleryNav(1);
     if(e.key==='Escape')closeGalleryLightbox();
   }
+  if(document.getElementById('imgViewerModal').classList.contains('open')){
+    if(e.key==='ArrowLeft')imgViewerNav(-1);
+    if(e.key==='ArrowRight')imgViewerNav(1);
+    if(e.key==='Escape')closeModal('imgViewerModal');
+  }
 });
 
 // ── GÄSTEBUCH ──
@@ -1423,7 +1485,9 @@ window.addEventListener('scroll',()=>document.getElementById('navbar').classList
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded',()=>{
-  if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){
+  const savedTheme=localStorage.getItem('theme');
+  const wantDark=savedTheme?savedTheme==='dark':(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if(wantDark){
     document.body.classList.add('dark');
     document.documentElement.classList.add('dark');
     document.getElementById('themeBtn').textContent='☀️';
