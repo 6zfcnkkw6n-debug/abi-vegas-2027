@@ -22,6 +22,9 @@ nav.scrolled{padding:.8rem 3rem}
 .nav-admin-btn,.nav-theme-btn{font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;background:none;border:1px solid var(--border);border-radius:6px;padding:.35rem .75rem;transition:all .2s}
 .nav-theme-btn{padding:.35rem .6rem;font-size:1rem;line-height:1}
 .nav-admin-btn:hover,.nav-admin-btn.active,.nav-theme-btn:hover{border-color:var(--accent);color:var(--accent)}
+.nav-bell-btn{position:relative;padding:.35rem .6rem;font-size:1rem;line-height:1;background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .2s}
+.nav-bell-btn:hover{border-color:var(--accent)}
+.nav-bell-badge{position:absolute;top:-.4rem;right:-.4rem;background:#D94A4A;color:#fff;font-size:.62rem;font-weight:700;min-width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0 3px;font-family:var(--font-body)}
 #hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8rem 2rem 4rem;position:relative;overflow:hidden}
 .hero-suits{font-size:1rem;letter-spacing:.6em;color:var(--accent);margin-bottom:1.2rem;opacity:0;animation:fadeUp .8s .1s forwards}
 .hero-eyebrow{font-size:.78rem;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:1.2rem;opacity:0;animation:fadeUp .8s .2s forwards}
@@ -222,6 +225,13 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 #mottoUnmuteBtn{position:fixed;bottom:1.5rem;left:1.5rem;z-index:300;background:var(--bg-card);border:2px solid var(--accent);border-radius:30px;padding:.65rem 1.1rem;font-size:.78rem;font-weight:600;color:var(--text);box-shadow:var(--shadow-h);cursor:pointer;font-family:var(--font-body)}
 .pf-row-next{border-left:3px solid var(--accent);background:var(--accent-light)}
 .pf-next-badge{display:inline-block;font-size:.62rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:var(--bg-card);padding:.1rem .5rem;border-radius:10px;margin-left:.4rem;vertical-align:middle}
+.inbox-entry{display:flex;align-items:flex-start;gap:.8rem;padding:.9rem 0;border-bottom:1px solid var(--border)}
+.inbox-entry:last-child{border-bottom:none}
+.inbox-entry.inbox-read{opacity:.55}
+.inbox-text{flex:1;font-size:.88rem;line-height:1.5;color:var(--text)}
+.inbox-actions{display:flex;gap:.4rem;flex-shrink:0}
+.inbox-actions button{background:none;border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:.85rem;line-height:1;transition:all .2s}
+.inbox-actions button:hover{border-color:var(--accent)}
 .modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(10,8,6,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .3s}
 .modal-overlay.open{opacity:1;pointer-events:all}
 .modal{background:var(--bg-card);border-radius:var(--radius);width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.2);transform:translateY(20px);transition:transform .3s,background-color .4s ease;overflow:hidden;max-height:90vh;overflow-y:auto}
@@ -287,6 +297,7 @@ footer strong{color:var(--text)}
   </ul>
   <div style="display:flex;align-items:center;gap:.6rem">
     <button class="nav-theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Hell/Dunkel umschalten">🌙</button>
+    <button class="nav-bell-btn" id="bellBtn" onclick="openInbox()" aria-label="Nachrichten">🔔<span class="nav-bell-badge" id="inboxBadge" style="display:none">0</span></button>
     <button class="nav-admin-btn" id="adminBtn" onclick="toggleAdmin()">⚙ Admin</button>
     <button class="nav-hamburger" id="hamburger" onclick="toggleMobileMenu()" aria-label="Menü">
       <span></span><span></span><span></span>
@@ -317,6 +328,16 @@ footer strong{color:var(--text)}
 </div>
 
 <button id="mottoUnmuteBtn" onclick="unmuteMottoReminder()" style="display:none">🔕 Erinnerungen stumm – wieder an?</button>
+
+<div class="modal-overlay" id="inboxModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">🔔 Nachrichten</div>
+      <button class="modal-close" onclick="closeModal('inboxModal')">✕</button>
+    </div>
+    <div class="modal-body" id="inboxList"></div>
+  </div>
+</div>
 
 <div class="mobile-menu" id="mobileMenu">
   <div class="mobile-suit">♠ ♥ ♦ ♣</div>
@@ -1248,6 +1269,55 @@ function updateCountdowns(){
     timer.innerHTML=`<div class="cd-unit"><span class="cd-num">${years}</span><span class="cd-unit-label">Jahre</span></div><div class="cd-unit"><span class="cd-num">${months}</span><span class="cd-unit-label">Mon.</span></div><div class="cd-unit"><span class="cd-num">${days}</span><span class="cd-unit-label">Tage</span></div><div class="cd-unit"><span class="cd-num">${pad(h)}</span><span class="cd-unit-label">Std</span></div>`;
   });
 }
+// ── NACHRICHTEN-INBOX ──
+function loadInbox(){
+  let inbox=[];
+  try{inbox=JSON.parse(localStorage.getItem('inboxMessages')||'[]');}catch(e){inbox=[];}
+  const today=new Date().toISOString().slice(0,10);
+  const filtered=inbox.filter(m=>m.date===today); // alte Nachrichten verschwinden am nächsten Tag
+  if(filtered.length!==inbox.length)localStorage.setItem('inboxMessages',JSON.stringify(filtered));
+  return filtered;
+}
+function saveInbox(inbox){localStorage.setItem('inboxMessages',JSON.stringify(inbox));}
+function addInboxMessage(baseId,title,text){
+  const today=new Date().toISOString().slice(0,10);
+  const id=baseId+'-'+today;
+  const inbox=loadInbox();
+  if(inbox.some(m=>m.id===id))return;
+  inbox.push({id,title,text,date:today,read:false});
+  saveInbox(inbox);
+  updateInboxBadge();
+}
+function updateInboxBadge(){
+  const inbox=loadInbox();
+  const unread=inbox.filter(m=>!m.read).length;
+  const badge=document.getElementById('inboxBadge');
+  if(!badge)return;
+  badge.style.display=unread>0?'flex':'none';
+  badge.textContent=unread;
+}
+function renderInbox(){
+  const inbox=loadInbox();
+  const list=document.getElementById('inboxList');
+  if(!inbox.length){list.innerHTML='<p style="text-align:center;color:var(--text-muted);font-size:.85rem;padding:1rem 0">Keine Nachrichten 📭</p>';return;}
+  list.innerHTML='';
+  [...inbox].reverse().forEach(m=>{
+    const row=document.createElement('div');
+    row.className='inbox-entry'+(m.read?' inbox-read':'');
+    row.innerHTML=`<div class="inbox-text"><strong>${m.title}</strong><br>${m.text}</div><div class="inbox-actions"><button onclick="markInboxRead('${m.id}')" title="${m.read?'Gelesen':'Als gelesen markieren'}">${m.read?'✓':'☐'}</button><button onclick="deleteInboxMessage('${m.id}')" title="Löschen">🗑</button></div>`;
+    list.appendChild(row);
+  });
+}
+function markInboxRead(id){
+  const inbox=loadInbox().map(m=>m.id===id?{...m,read:true}:m);
+  saveInbox(inbox);renderInbox();updateInboxBadge();
+}
+function deleteInboxMessage(id){
+  const inbox=loadInbox().filter(m=>m.id!==id);
+  saveInbox(inbox);renderInbox();updateInboxBadge();
+}
+function openInbox(){renderInbox();openModal('inboxModal');}
+
 function mottoInReminderWindow(){
   if(new URLSearchParams(location.search).get('testMotto')==='1')return true; // Test-Modus: ?testMotto=1 an die URL anhängen
   const mottoTarget=new Date('2027-03-30T08:00:00');
@@ -1291,10 +1361,13 @@ async function isLoggedIn(){
 async function checkMottoReminder(){
   if(!mottoInReminderWindow())return;
   updateMottoUnmuteBtn();
-  if(mottoMuteActive())return;
   const loggedIn=await isLoggedIn();
   const personal=document.getElementById('mottoReminderPersonal');
   if(personal)personal.style.display=loggedIn?'block':'none';
+  addInboxMessage('motto','🎭 Mottowoche',loggedIn
+    ?'Seid ihr bereit für die ersten Kostüme? Und: Hast du dein Kostüm schon? 😉'
+    :'Seid ihr bereit für die ersten Kostüme? 👀');
+  if(mottoMuteActive())return;
   openModal('mottoReminderModal');
 }
 
@@ -1320,6 +1393,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(document.getElementById('pruefungenModal').classList.contains('open'))renderPruefungen();
   },1000);
   setTimeout(()=>document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=(i%4)*80+'ms';obs.observe(el);}),100);
+  updateInboxBadge();
   setTimeout(checkMottoReminder,1500);
 });
 </script>
