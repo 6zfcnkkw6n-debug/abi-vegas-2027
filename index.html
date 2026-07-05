@@ -103,20 +103,26 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .teaser-avatar:first-child{margin-left:0}
 .schueler-teaser-quote{font-family:var(--font-display);font-size:clamp(1.2rem,3vw,1.6rem);font-weight:300;font-style:italic;color:var(--text);margin-bottom:.6rem;line-height:1.3}
 .schueler-teaser-sub{font-size:.88rem;color:var(--text-muted);margin-bottom:1.8rem;line-height:1.6}
-.schueler-modal-search{display:flex;gap:.6rem;margin-bottom:1.2rem;position:sticky;top:0;background:var(--bg-card);padding:.6rem 0;z-index:5}
-.schueler-modal-search input{flex:1;padding:.65rem 1rem;border:1px solid var(--border);border-radius:8px;font-family:var(--font-body);font-size:16px;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s}
+#schuelerModalBox{display:flex;flex-direction:column;height:85vh;max-height:85vh;overflow:hidden}
+#schuelerModalBox .modal-body{flex:1;overflow-y:auto;padding-top:0}
+.schueler-modal-search{position:sticky;top:0;background:var(--bg-card);padding:1rem 0 .8rem;z-index:5}
+.schueler-modal-search input{width:100%;padding:.65rem 1rem;border:1px solid var(--border);border-radius:8px;font-family:var(--font-body);font-size:16px;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s}
 .schueler-modal-search input:focus{border-color:var(--accent)}
-.schueler-modal-count{font-size:.78rem;color:var(--text-muted);margin-bottom:1rem}
-.schueler-modal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.8rem;max-height:65vh;overflow-y:auto;padding-right:.3rem}
-.schueler-modal-grid::-webkit-scrollbar{width:4px}
-.schueler-modal-grid::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-.sm-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem .8rem;text-align:center;cursor:pointer;transition:all .2s}
-.sm-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow)}
-.sm-card-avatar{width:52px;height:52px;border-radius:50%;margin:0 auto .6rem;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.2rem;font-weight:600;color:#fff;overflow:hidden}
-.sm-card-avatar img{width:100%;height:100%;object-fit:cover}
-.sm-card-name{font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:.2rem;line-height:1.2}
-.sm-card-sport{font-size:.7rem;color:var(--accent);font-weight:500}
-.sm-card.hidden{display:none}
+.sm-list{display:grid;grid-template-columns:1fr 1fr;column-gap:1.2rem}
+.sm-row{display:flex;align-items:center;gap:.6rem;padding:.6rem .2rem;cursor:pointer;border-top:1px solid var(--border);transition:background-color .15s}
+.sm-row:hover{background:var(--bg)}
+.sm-row.own{background:var(--accent-light)}
+.sm-row.own .sm-row-name{color:var(--accent)}
+.sm-row-avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:.8rem;font-weight:600;color:#fff;overflow:hidden}
+.sm-row-avatar img{width:100%;height:100%;object-fit:cover}
+.sm-row-info{min-width:0;flex:1}
+.sm-row-name{font-size:.82rem;font-weight:600;color:var(--text);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sm-row-sport{font-size:.68rem;color:var(--text-muted)}
+.sm-row-chevron{font-size:.65rem;color:var(--text-muted);transition:transform .2s;flex-shrink:0}
+.sm-row.expanded .sm-row-chevron{transform:rotate(180deg)}
+.sm-row.hidden{display:none}
+.sm-detail{grid-column:1/-1;border-top:1px solid var(--border);padding:1.4rem .8rem 1.8rem;background:var(--bg);border-radius:8px;margin:.2rem 0}
+.sm-divider{grid-column:1/-1;border-top:1px solid var(--border)}
 .sm-top{display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem}
 .sm-avatar{width:80px;height:80px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;font-weight:600;color:#fff}
 .sm-info h2{font-family:var(--font-display);font-size:1.8rem;font-weight:500;line-height:1.1;color:var(--text)}
@@ -297,8 +303,9 @@ footer strong{color:var(--text)}
   .cd-num{font-size:1.6rem}
   .cd-timer{gap:.5rem}
   .countdown-card{padding:1.5rem 1.1rem}
-  .schueler-modal-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+  .sm-row-sport{display:none}
   .modal-overlay{align-items:flex-start;padding-top:1.5rem}
+  #schuelerModalBox{height:92vh;max-height:92vh}
 }
 @media(max-width:600px){
   nav>div{gap:.35rem !important}
@@ -579,20 +586,19 @@ footer strong{color:var(--text)}
   </div>
 </div>
 
-<!-- STECKBRIEF-LISTE MODAL -->
+<!-- STECKBRIEF MODAL -->
 <div class="modal-overlay" id="schuelerListModal">
-  <div class="modal" style="max-width:700px">
+  <div class="modal" id="schuelerModalBox" style="max-width:900px">
     <div class="modal-header">
       <div class="modal-title">🃏 Die Klasse – Abi Vegas 2027</div>
-      <div class="modal-sub">42 Personen · Klicke auf eine Person für den Steckbrief</div>
+      <div class="modal-sub" id="schuelerCount">42 Personen · Klicke auf eine Person für den Steckbrief</div>
       <button class="modal-close" onclick="closeModal('schuelerListModal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="schueler-modal-search">
         <input type="text" id="schuelerSearch" placeholder="🔍 Name oder Sportart suchen..." oninput="filterSchueler(this.value)">
       </div>
-      <div class="schueler-modal-count" id="schuelerCount">42 Personen</div>
-      <div class="schueler-modal-grid" id="schuelerGrid"></div>
+      <div class="sm-list" id="schuelerGrid"></div>
     </div>
   </div>
 </div>
@@ -639,20 +645,6 @@ footer strong{color:var(--text)}
   </div>
   <div class="gallery-lb-caption" id="galleryLbCaption"></div>
   <div class="gallery-lb-thumb-row" id="galleryLbThumbs"></div>
-</div>
-
-<!-- SCHÜLER MODAL -->
-<div class="modal-overlay" id="schuelerModal">
-  <div class="modal" style="max-width:640px">
-    <div class="modal-header">
-      <div style="display:flex;align-items:center;gap:.8rem">
-        <button class="btn btn-ghost btn-sm" onclick="backToSchuelerList()" style="padding:.3rem .7rem;font-size:.75rem">← Zurück</button>
-        <div><div class="modal-title" id="smTitle"></div><div class="modal-sub" id="smSub"></div></div>
-      </div>
-      <button class="modal-close" onclick="closeModal('schuelerModal')">✕</button>
-    </div>
-    <div class="modal-body" id="smBody"></div>
-  </div>
 </div>
 
 <!-- ADMIN PANEL -->
@@ -996,10 +988,15 @@ function closeMobileMenu(){
 }
 
 // ── SCHÜLER ──
+// Platzhalter bis das echte Login/owner_user_id-System steht: hebt den eigenen Steckbrief hervor.
+// Sobald Auth existiert, hier durch echten Session-Abgleich (z.B. owner_user_id === auth.uid()) ersetzen.
+const MY_NAME_PLACEHOLDER='Julius Ulrich';
+let mySchuelerName=MY_NAME_PLACEHOLDER;
+let openSchuelerIdx=null;
+
 function initSchueler(){
-  const grid=document.getElementById('schuelerGrid');
   const teaserAvatars=document.getElementById('teaserAvatars');
-  SCHUELER.slice(0,8).forEach((s,i)=>{
+  SCHUELER.slice(0,8).forEach((s)=>{
     const inits=s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
     const av=document.createElement('div');av.className='teaser-avatar';
     av.style.background=s.farbe;
@@ -1009,68 +1006,82 @@ function initSchueler(){
   });
   const more=document.createElement('div');more.className='teaser-avatar';
   more.style.cssText='background:var(--accent);font-size:.75rem;font-weight:600;font-family:var(--font-body)';
-  more.textContent='+'+( SCHUELER.length-8);
+  more.textContent='+'+(SCHUELER.length-8);
   teaserAvatars.appendChild(more);
-
-  SCHUELER.forEach((s,i)=>{
-    const inits=s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
-    const card=document.createElement('div');
-    card.className='sm-card';
-    card.setAttribute('data-name',s.name.toLowerCase());
-    card.setAttribute('data-sport',s.sport.toLowerCase());
-    card.onclick=()=>{closeModal('schuelerListModal');setTimeout(()=>openSchuelerModal(i),150);};
-    const avatarHtml=s.profilBild
-      ?`<div class="sm-card-avatar"><img src="${s.profilBild}" alt="${s.name}"></div>`
-      :`<div class="sm-card-avatar" style="background:${s.farbe}">${inits}</div>`;
-    card.innerHTML=`${avatarHtml}<div class="sm-card-name">${s.name}</div><div class="sm-card-sport">${s.sport}</div>`;
-    grid.appendChild(card);
-  });
+  renderSchuelerList();
 }
-function filterSchueler(query){
-  const q=query.toLowerCase().trim();
-  const cards=document.querySelectorAll('.sm-card');
+function schuelerSortedIndices(){
+  return SCHUELER.map((s,i)=>i).sort((a,b)=>SCHUELER[a].name.localeCompare(SCHUELER[b].name,'de'));
+}
+function renderSchuelerList(query){
+  const grid=document.getElementById('schuelerGrid');
+  grid.innerHTML='';
+  const q=(query||'').toLowerCase().trim();
   let visible=0;
-  cards.forEach(card=>{
-    const name=card.getAttribute('data-name')||'';
-    const sport=card.getAttribute('data-sport')||'';
-    const match=!q||name.includes(q)||sport.includes(q);
-    card.classList.toggle('hidden',!match);
-    if(match)visible++;
+  schuelerSortedIndices().forEach(i=>{
+    const s=SCHUELER[i];
+    const match=!q||s.name.toLowerCase().includes(q)||s.sport.toLowerCase().includes(q);
+    if(!match)return;
+    visible++;
+    const inits=s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
+    const isOwn=s.name===mySchuelerName;
+    const row=document.createElement('div');
+    row.className='sm-row'+(isOwn?' own':'')+(openSchuelerIdx===i?' expanded':'');
+    const avatarHtml=s.profilBild
+      ?`<div class="sm-row-avatar"><img src="${s.profilBild}" alt="${s.name}"></div>`
+      :`<div class="sm-row-avatar" style="background:${s.farbe}">${inits}</div>`;
+    row.innerHTML=`${avatarHtml}<div class="sm-row-info"><div class="sm-row-name">${s.name}${isOwn?' · Du':''}</div><div class="sm-row-sport">${s.sport}</div></div><div class="sm-row-chevron">▾</div>`;
+    row.onclick=()=>toggleSchueler(i);
+    grid.appendChild(row);
+    if(openSchuelerIdx===i)grid.appendChild(buildSchuelerDetail(i));
   });
+  const divider=document.createElement('div');divider.className='sm-divider';
+  grid.appendChild(divider);
   const count=document.getElementById('schuelerCount');
-  if(count)count.textContent=q?`${visible} Treffer von ${SCHUELER.length}`:`${SCHUELER.length} Personen`;
+  if(count)count.textContent=q?`${visible} Treffer von ${SCHUELER.length}`:`${SCHUELER.length} Personen · Klicke auf eine Person für den Steckbrief`;
+}
+function filterSchueler(query){renderSchuelerList(query);}
+function toggleSchueler(i){
+  openSchuelerIdx=openSchuelerIdx===i?null:i;
+  renderSchuelerList(document.getElementById('schuelerSearch').value);
+  if(openSchuelerIdx!==null){
+    setTimeout(()=>{
+      const el=document.querySelector('.sm-row.expanded');
+      if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    },50);
+  }
 }
 let currentSchuelerImgs=[];
-function openSchuelerModal(i){
+function buildSchuelerDetail(i){
   const s=SCHUELER[i];
   const inits=s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
-  document.getElementById('smTitle').textContent=s.name;
-  document.getElementById('smSub').textContent=s.sport+' · Abi Vegas 2027';
   const factsHtml=s.facts.map(f=>`<span class="sm-fact">${f}</span>`).join('');
   const img1Id=`smImg1_${i}`,img2Id=`smImg2_${i}`;
   currentSchuelerImgs=[s.profilBild,s.sportImg1,s.sportImg2].filter(Boolean);
   const avatarHtml=s.profilBild
     ?`<div class="sm-avatar" style="background:${s.farbe};padding:0;overflow:hidden;cursor:pointer"><img src="${s.profilBild}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>`
     :`<div class="sm-avatar" style="background:${s.farbe}">${inits}</div>`;
-  document.getElementById('smBody').innerHTML=`<div class="sm-top">${avatarHtml}<div class="sm-info"><h2>${s.name}</h2><div class="sm-nick">„${s.nick}"</div><span class="sm-sport-tag">${s.sport}</span></div></div><div class="sm-motto">${s.motto}</div><p class="sm-bio">${s.bio}</p><div class="sm-facts">${factsHtml}</div><div class="sm-images"><div><div class="sm-img-wrap" id="${img1Id}"></div><div class="sm-img-label">${s.sportImg1Label}</div></div><div><div class="sm-img-wrap" id="${img2Id}"></div><div class="sm-img-label">${s.sportImg2Label}</div></div></div>`;
+  const wrap=document.createElement('div');
+  wrap.className='sm-detail';
+  wrap.innerHTML=`<div class="sm-top">${avatarHtml}<div class="sm-info"><h2>${s.name}</h2><div class="sm-nick">„${s.nick}"</div><span class="sm-sport-tag">${s.sport}</span></div></div><div class="sm-motto">${s.motto}</div><p class="sm-bio">${s.bio}</p><div class="sm-facts">${factsHtml}</div><div class="sm-images"><div><div class="sm-img-wrap" id="${img1Id}"></div><div class="sm-img-label">${s.sportImg1Label}</div></div><div><div class="sm-img-wrap" id="${img2Id}"></div><div class="sm-img-label">${s.sportImg2Label}</div></div></div>`;
   if(s.profilBild){
-    const avatarEl=document.querySelector('#smBody .sm-avatar');
+    const avatarEl=wrap.querySelector('.sm-avatar');
     if(avatarEl)avatarEl.onclick=()=>openImageViewer(currentSchuelerImgs,currentSchuelerImgs.indexOf(s.profilBild));
   }
   const palette=['#5B7FA6','#A66B3A','#5B9E6B','#9E5B7A','#5B9EA0','#8B7355','#6B5BA6','#A65B3A'];
   [{id:img1Id,src:s.sportImg1,emoji:s.sport.split(' ')[0]},{id:img2Id,src:s.sportImg2,emoji:'🏅'}].forEach((item,j)=>{
-    const wrap=document.getElementById(item.id);
+    const w=wrap.querySelector('#'+item.id);
     if(item.src){
-      wrap.innerHTML=`<img src="${item.src}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`;
-      wrap.style.cursor='pointer';
-      wrap.onclick=()=>openImageViewer(currentSchuelerImgs,currentSchuelerImgs.indexOf(item.src));
+      w.innerHTML=`<img src="${item.src}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`;
+      w.style.cursor='pointer';
+      w.onclick=()=>openImageViewer(currentSchuelerImgs,currentSchuelerImgs.indexOf(item.src));
     }
     else{
-      const cv=document.createElement('canvas');cv.width=400;cv.height=300;cv.style.width='100%';cv.style.height='100%';wrap.appendChild(cv);
+      const cv=document.createElement('canvas');cv.width=400;cv.height=300;cv.style.width='100%';cv.style.height='100%';w.appendChild(cv);
       drawThumb(cv,palette[(i+j*3)%palette.length],item.emoji,'Foto folgt');
     }
   });
-  openModal('schuelerModal');
+  return wrap;
 }
 let imgViewerList=[],imgViewerIndex=0;
 function openImageViewer(list,idx){
@@ -1087,10 +1098,6 @@ function updateImgViewer(){
 function imgViewerNav(dir){
   imgViewerIndex=(imgViewerIndex+dir+imgViewerList.length)%imgViewerList.length;
   updateImgViewer();
-}
-function backToSchuelerList(){
-  closeModal('schuelerModal');
-  setTimeout(()=>openModal('schuelerListModal'),150);
 }
 
 // ── SAMMELKARTEN (Prototyp) ──
