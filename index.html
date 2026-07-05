@@ -341,7 +341,7 @@ footer strong{color:var(--text)}
 <body>
 
 <nav id="navbar">
-  <a class="nav-logo" href="#hero"><span style="opacity:.5">♠</span>Abi <span>2027</span></a>
+  <a class="nav-logo" href="#hero" onclick="handleLogoClick()"><span style="opacity:.5">♠</span>Abi <span>2027</span></a>
   <ul class="nav-links">
     <li><a href="#countdown">Countdown</a></li><li><a href="#abikasse">Abikasse</a></li>
     <li><a href="#schueler">Klasse</a></li><li><a href="#sammelkarten">Sammelkarten</a></li>
@@ -351,7 +351,6 @@ footer strong{color:var(--text)}
   <div style="display:flex;align-items:center;gap:.6rem">
     <button class="nav-theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Hell/Dunkel umschalten">🌙</button>
     <button class="nav-bell-btn" id="bellBtn" onclick="openInbox()" aria-label="Nachrichten">🔔<span class="nav-bell-badge" id="inboxBadge" style="display:none">0</span></button>
-    <button class="nav-admin-btn" id="adminBtn" onclick="toggleAdmin()">⚙<span class="nav-admin-label"> Admin</span></button>
     <button class="nav-hamburger" id="hamburger" onclick="toggleMobileMenu()" aria-label="Menü">
       <span></span><span></span><span></span>
     </button>
@@ -995,16 +994,27 @@ function checkAdminPw(){
   if(document.getElementById('adminPw').value==='Jackpot'){
     closeModal('adminModal');
     document.body.classList.add('admin-mode');
-    document.getElementById('adminBtn').classList.add('active');
+    const btn=document.getElementById('adminBtn');if(btn)btn.classList.add('active');
     adminMode=true;showToast('Admin-Modus aktiv ✓');
   }else showToast('❌ Falsches Passwort');
   document.getElementById('adminPw').value='';
 }
 function exitAdmin(){
   document.body.classList.remove('admin-mode');
-  document.getElementById('adminBtn').classList.remove('active');
+  const btn=document.getElementById('adminBtn');if(btn)btn.classList.remove('active');
   if(kasseEditMode)toggleKasseEdit();
   adminMode=false;showToast('Admin verlassen');
+}
+let logoClickCount=0,logoClickTimer=null;
+function handleLogoClick(){
+  logoClickCount++;
+  clearTimeout(logoClickTimer);
+  logoClickTimer=setTimeout(()=>{logoClickCount=0;},1500);
+  if(logoClickCount>=5){
+    logoClickCount=0;
+    clearTimeout(logoClickTimer);
+    toggleAdmin();
+  }
 }
 
 // ── HAMBURGER MENU ──
