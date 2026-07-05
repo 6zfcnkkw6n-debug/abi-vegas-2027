@@ -104,6 +104,12 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .schueler-teaser-quote{font-family:var(--font-display);font-size:clamp(1.4rem,3.4vw,1.9rem);font-weight:300;font-style:italic;color:var(--text);margin-bottom:.7rem;line-height:1.3}
 .schueler-teaser-sub{font-size:.92rem;color:var(--text-muted);margin-bottom:2rem;line-height:1.6}
 #schuelerModalBox{display:flex;flex-direction:column;height:85vh;max-height:85vh;overflow:hidden}
+#schuelerModalBox .modal-header{transition:padding .25s ease,border-color .25s ease}
+#schuelerModalBox .modal-title{transition:font-size .25s ease,margin-bottom .25s ease}
+#schuelerModalBox .modal-sub{transition:max-height .25s ease,opacity .2s ease,margin-top .2s ease;max-height:40px;overflow:hidden}
+#schuelerModalBox.sm-scrolled .modal-header{padding:1rem 2rem .6rem;border-color:transparent}
+#schuelerModalBox.sm-scrolled .modal-title{font-size:1.05rem;margin-bottom:0}
+#schuelerModalBox.sm-scrolled .modal-sub{max-height:0;opacity:0}
 #schuelerModalBox .modal-body{flex:1;overflow-y:auto;padding-top:0}
 .schueler-modal-search{display:flex;align-items:center;gap:.5rem;position:sticky;top:0;background:var(--bg-card);padding:1rem 0 .8rem;z-index:5}
 .schueler-modal-search-icon{font-size:.95rem;flex-shrink:0}
@@ -182,6 +188,10 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .vorbestell-form{max-width:360px}
 /* SLOT MACHINE */
 .slot-machine{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:2.5rem;box-shadow:var(--shadow);text-align:center;max-width:420px;transition:background-color .4s ease,border-color .4s ease}
+.gluecksrad-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:2.5rem;box-shadow:var(--shadow);text-align:center;max-width:340px;transition:background-color .4s ease,border-color .4s ease}
+.gluecksrad-wrap{position:relative;width:240px;height:240px;margin:0 auto}
+.gluecksrad-pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:1.4rem;color:var(--accent);z-index:2}
+#gluecksradCanvas{border-radius:50%;display:block;transition:transform 3.6s cubic-bezier(.13,.68,.15,1)}
 .slot-reels{display:flex;gap:.8rem;justify-content:center;margin-bottom:1.5rem}
 .slot-reel{width:64px;height:64px;background:var(--bg);border:2px solid var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:2rem;transition:background-color .4s ease,border-color .4s ease}
 .slot-reel.spinning{animation:slotSpin .1s linear infinite}
@@ -336,6 +346,7 @@ footer strong{color:var(--text)}
     <li><a href="#countdown">Countdown</a></li><li><a href="#abikasse">Abikasse</a></li>
     <li><a href="#schueler">Klasse</a></li><li><a href="#sammelkarten">Sammelkarten</a></li>
     <li><a href="#galerie">Galerie</a></li><li><a href="#gaestebuch">Gästebuch</a></li>
+    <li><a href="#spiele">Spiele</a></li>
   </ul>
   <div style="display:flex;align-items:center;gap:.6rem">
     <button class="nav-theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Hell/Dunkel umschalten">🌙</button>
@@ -392,6 +403,7 @@ footer strong{color:var(--text)}
   <a href="#sammelkarten" onclick="closeMobileMenu()">Sammelkarten</a>
   <a href="#galerie" onclick="closeMobileMenu()">Galerie</a>
   <a href="#gaestebuch" onclick="closeMobileMenu()">Gästebuch</a>
+  <a href="#spiele" onclick="closeMobileMenu()">Spiele</a>
   <div class="mobile-suit">♠ ♥ ♦ ♣</div>
 </div>
 
@@ -543,18 +555,30 @@ footer strong{color:var(--text)}
 </section>
 
 <hr class="sep">
-<section id="slotmachine">
+<section id="spiele">
   <p class="section-label reveal">Nur zum Spaß</p>
-  <h2 class="section-title reveal">🎰 Einarmiger Bandit</h2>
-  <p class="section-desc reveal">Kein Einsatz, kein Gewinn – nur zum Zeitvertreib. 🍒</p>
-  <div class="slot-machine reveal">
-    <div class="slot-reels">
-      <div class="slot-reel" id="reel0">🍒</div>
-      <div class="slot-reel" id="reel1">🍋</div>
-      <div class="slot-reel" id="reel2">🔔</div>
+  <h2 class="section-title reveal">🎲 Spiele</h2>
+  <p class="section-desc reveal">Kein Einsatz, kein Gewinn – rein zur Unterhaltung. Wir übernehmen keine Verantwortung für Spielsucht (bei uns gibt's eh nix zu holen 😄).</p>
+  <div style="display:flex;flex-wrap:wrap;gap:2rem;justify-content:center;align-items:flex-start">
+    <div class="slot-machine reveal">
+      <h3 style="font-family:var(--font-display);font-size:1.1rem;margin-bottom:1.2rem">🎰 Einarmiger Bandit</h3>
+      <div class="slot-reels">
+        <div class="slot-reel" id="reel0">🍒</div>
+        <div class="slot-reel" id="reel1">🍋</div>
+        <div class="slot-reel" id="reel2">🔔</div>
+      </div>
+      <button class="btn btn-primary" onclick="spinSlot()">🎲 Drehen</button>
+      <div class="slot-result" id="slotResult"></div>
     </div>
-    <button class="btn btn-primary" onclick="spinSlot()">🎲 Drehen</button>
-    <div class="slot-result" id="slotResult"></div>
+    <div class="gluecksrad-card reveal">
+      <h3 style="font-family:var(--font-display);font-size:1.1rem;margin-bottom:1.2rem">🎡 Glücksrad</h3>
+      <div class="gluecksrad-wrap">
+        <div class="gluecksrad-pointer">▼</div>
+        <canvas id="gluecksradCanvas" width="240" height="240"></canvas>
+      </div>
+      <button class="btn btn-primary" onclick="spinGluecksrad()" style="margin-top:1.2rem">🎡 Drehen</button>
+      <div class="slot-result" id="gluecksradResult"></div>
+    </div>
   </div>
 </section>
 
@@ -821,7 +845,15 @@ function openModal(id){
   if(id==='mottowocheModal')renderMottowoche();
   if(id==='pruefungenModal')renderPruefungen();
 }
-function closeModal(id){document.getElementById(id).classList.remove('open');}
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  if(id==='schuelerListModal'){
+    const modalBody=document.querySelector('#schuelerModalBox .modal-body');
+    const modalBox=document.getElementById('schuelerModalBox');
+    if(modalBody)modalBody.scrollTop=0;
+    if(modalBox)modalBox.classList.remove('sm-scrolled');
+  }
+}
 document.querySelectorAll('.modal-overlay').forEach(el=>{
   el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});
 });
@@ -999,6 +1031,13 @@ let openSchuelerIdx=null;
 
 function initSchueler(){
   const teaserAvatars=document.getElementById('teaserAvatars');
+  const modalBody=document.querySelector('#schuelerModalBox .modal-body');
+  const modalBox=document.getElementById('schuelerModalBox');
+  if(modalBody&&modalBox){
+    modalBody.addEventListener('scroll',()=>{
+      modalBox.classList.toggle('sm-scrolled',modalBody.scrollTop>16);
+    });
+  }
   SCHUELER.slice(0,8).forEach((s)=>{
     const inits=s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
     const av=document.createElement('div');av.className='teaser-avatar';
@@ -1218,6 +1257,54 @@ function spinSlot(){
       if(win)showToast('Jackpot! 🎰');
     }
   },80);
+}
+
+// ── GLÜCKSRAD ──
+const GLUECKSRAD_SEGMENTE=[
+  {text:'☕ Kaffee spendiert',color:'#4A90D9'},
+  {text:'🕺 Tanzpflicht',color:'#D94A7E'},
+  {text:'📸 Foto-Pflicht',color:'#4AD96D'},
+  {text:'🤷 Nochmal drehen',color:'#D9814A'},
+  {text:'🎉 Doppelt Glück',color:'#9B4AD9'},
+  {text:'😴 Traum-frei',color:'#D94A4A'},
+  {text:'🥳 Bester Tag',color:'#4AC4D9'},
+  {text:'🍕 Pizza (imaginär)',color:'#D9C44A'}
+];
+let gluecksradRotation=0,gluecksradSpinning=false;
+function drawGluecksrad(){
+  const cv=document.getElementById('gluecksradCanvas');
+  if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const n=GLUECKSRAD_SEGMENTE.length,r=118,cx=120,cy=120,slice=2*Math.PI/n;
+  ctx.clearRect(0,0,240,240);
+  GLUECKSRAD_SEGMENTE.forEach((seg,i)=>{
+    const start=i*slice,end=start+slice;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,end);ctx.closePath();
+    ctx.fillStyle=seg.color;ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;ctx.stroke();
+    ctx.save();
+    ctx.translate(cx,cy);ctx.rotate(start+slice/2);
+    ctx.textAlign='right';ctx.fillStyle='#fff';ctx.font='600 10px Poppins, sans-serif';
+    ctx.fillText(seg.text,r-10,4);
+    ctx.restore();
+  });
+}
+function spinGluecksrad(){
+  if(gluecksradSpinning)return;
+  gluecksradSpinning=true;
+  const n=GLUECKSRAD_SEGMENTE.length,slice=360/n;
+  const targetIdx=Math.floor(Math.random()*n);
+  const jitter=(Math.random()*slice*0.6-slice*0.3);
+  const targetAngle=5*360+(360-(targetIdx*slice+slice/2))+jitter;
+  gluecksradRotation+=targetAngle;
+  const cv=document.getElementById('gluecksradCanvas');
+  cv.style.transform=`rotate(${gluecksradRotation}deg)`;
+  const resultEl=document.getElementById('gluecksradResult');
+  resultEl.textContent='';
+  setTimeout(()=>{
+    resultEl.textContent='🎡 '+GLUECKSRAD_SEGMENTE[targetIdx].text;
+    gluecksradSpinning=false;
+  },3700);
 }
 
 // ── VORBESTELLUNG (Sammelkarten nächstes Jahr) ──
@@ -1518,7 +1605,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('themeBtn').textContent='☀️';
   }
   Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb()]).finally(()=>{
-    initSchueler();initSammelkarten();initGalerie();renderGb();updateKasseUI();
+    initSchueler();initSammelkarten();initGalerie();renderGb();updateKasseUI();drawGluecksrad();
     setTimeout(()=>{document.getElementById('kasseBar').style.width=Math.min(100,Math.round(kasseValue/KASSE_GOAL*100))+'%';},800);
   });
   updateCountdowns();
