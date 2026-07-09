@@ -625,14 +625,33 @@ footer strong{color:var(--text)}
         </div>
         <div class="form-field"><label>E-Mail</label><input type="email" id="authEmail" placeholder="du@sportschulen-halle.de" autocomplete="email"></div>
         <div class="form-field"><label>Passwort</label><input type="password" id="authPw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()"></div>
+        <div style="text-align:right;margin:-.7rem 0 1rem" id="forgotPwLinkWrap"><a href="#" onclick="showForgotPassword();return false" style="font-size:.78rem;color:var(--text-muted)">Passwort vergessen?</a></div>
         <div id="authHint" style="font-size:.78rem;color:var(--text-muted);margin:-.4rem 0 1rem;line-height:1.4"></div>
         <button class="btn btn-primary" id="authSubmitBtn" onclick="submitAuth()" style="width:100%;justify-content:center">Einloggen</button>
+      </div>
+
+      <div id="accountForgotPw" style="display:none">
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.4">Gib deine E-Mail ein, dann schicken wir dir einen Link zum Zurücksetzen.</p>
+        <div class="form-field"><label>E-Mail</label><input type="email" id="forgotPwEmail" placeholder="du@sportschulen-halle.de" onkeydown="if(event.key==='Enter')submitForgotPassword()"></div>
+        <button class="btn btn-primary" id="forgotPwSubmitBtn" onclick="submitForgotPassword()" style="width:100%;justify-content:center;margin-bottom:.6rem">Link senden</button>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="setAuthTab('login')">Zurück zum Login</button>
+      </div>
+
+      <div id="accountSetNewPw" style="display:none">
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.4">Neues Passwort für deinen Account festlegen.</p>
+        <div class="form-field"><label>Neues Passwort</label><input type="password" id="newPwInput" placeholder="mind. 6 Zeichen" onkeydown="if(event.key==='Enter')submitNewPassword()"></div>
+        <button class="btn btn-primary" id="newPwSubmitBtn" onclick="submitNewPassword()" style="width:100%;justify-content:center">✓ Passwort speichern</button>
       </div>
 
       <div id="accountLoggedIn" style="display:none">
         <p style="font-size:.9rem;color:var(--text-muted);margin-bottom:.3rem">Eingeloggt als</p>
         <p style="font-weight:600;margin-bottom:1.2rem;word-break:break-all" id="accountEmailLabel"></p>
         <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:.6rem" onclick="goToMySteckbrief()">✏️ Meinen Steckbrief bearbeiten</button>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-bottom:.6rem" onclick="toggleChangePw()">🔑 Passwort ändern</button>
+        <div id="changePwPanel" style="display:none;margin-bottom:.6rem">
+          <div class="form-field"><label>Neues Passwort</label><input type="password" id="changePwInput" placeholder="mind. 6 Zeichen" onkeydown="if(event.key==='Enter')submitChangePassword()"></div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitChangePassword()">✓ Speichern</button>
+        </div>
         <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="doLogout()">Abmelden</button>
       </div>
 
@@ -977,22 +996,75 @@ async function loadGaestebuchFromDb(){
 }
 
 // ── AUTH ──
+// WICHTIG: Registrierung + Passwort-Reset bleiben gesperrt, bis Julius grünes Licht gibt.
+// Kein einziger Signup/Reset-Call geht raus (=keine E-Mail), solange REGISTRATION_OPEN=false ist.
+// Erst auf true stellen, wenn Julius das GO gibt - dann committen & pushen.
+const REGISTRATION_OPEN=false;
 let currentUser=null,authTab='login';
 function setAuthTab(tab){
   authTab=tab;
+  document.getElementById('accountForgotPw').style.display='none';
+  document.getElementById('accountLoggedOut').style.display='block';
   document.getElementById('authTabLogin').classList.toggle('active',tab==='login');
   document.getElementById('authTabSignup').classList.toggle('active',tab==='signup');
   document.getElementById('authSubmitBtn').textContent=tab==='login'?'Einloggen':'Account erstellen';
   document.getElementById('authPw').autocomplete=tab==='login'?'current-password':'new-password';
-  document.getElementById('authHint').textContent=tab==='signup'?'Nur E-Mails aus der Klassenliste können sich registrieren. Passwort: mind. 6 Zeichen.':'';
+  document.getElementById('forgotPwLinkWrap').style.display=tab==='login'?'block':'none';
+  if(!REGISTRATION_OPEN&&tab==='signup'){
+    document.getElementById('authHint').textContent='🔒 Registrierung ist noch nicht freigeschaltet – kommt bald!';
+  }else{
+    document.getElementById('authHint').textContent=tab==='signup'?'Nur E-Mails aus der Klassenliste können sich registrieren. Passwort: mind. 6 Zeichen.':'';
+  }
 }
-async function submitAuth(){
+function showForgotPassword(){
+  document.getElementById('accountLoggedOut').style.display='none';
+  document.getElementById('accountForgotPw').style.display='block';
+}
+async function submitForgotPassword(){
+  const email=document.getElementById('forgotPwEmail').value.trim();
+  if(!email){showToast('❌ E-Mail eingeben');return;}
+  if(!REGISTRATION_OPEN){showToast('🔒 Noch nicht freigeschaltet – kommt bald!');return;}
+  const btn=document.getElementById('forgotPwSubmitBtn');btn.disabled=true;btn.textContent='Sende...';
+  try{
+    const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
+    if(error){showToast('❌ '+error.message);return;}
+    showToast('📧 Link verschickt, falls die E-Mail registriert ist');
+    setAuthTab('login');
+  }finally{btn.disabled=false;btn.textContent='Link senden';}
+}
+async function submitNewPassword(){
+  const pw=document.getElementById('newPwInput').value;
+  if(pw.length<6){showToast('❌ Mind. 6 Zeichen');return;}
+  const btn=document.getElementById('newPwSubmitBtn');btn.disabled=true;btn.textContent='Speichert...';
+  try{
+    const{error}=await sb.auth.updateUser({password:pw});
+    if(error){showToast('❌ '+error.message);return;}
+    showToast('✓ Neues Passwort gesetzt');
+    document.getElementById('accountSetNewPw').style.display='none';
+    refreshAuthUI();
+  }finally{btn.disabled=false;btn.textContent='✓ Passwort speichern';}
+}
+function toggleChangePw(){
+  const p=document.getElementById('changePwPanel');
+  p.style.display=p.style.display==='none'?'block':'none';
+}
+async function submitChangePassword(){
+  const pw=document.getElementById('changePwInput').value;
+  if(pw.length<6){showToast('❌ Mind. 6 Zeichen');return;}
+  const{error}=await sb.auth.updateUser({password:pw});
+  if(error){showToast('❌ '+error.message);return;}
+  showToast('✓ Passwort geändert');
+  document.getElementById('changePwInput').value='';
+  document.getElementById('changePwPanel').style.display='none';
+}
+function submitAuth(){
   const email=document.getElementById('authEmail').value.trim();
   const pw=document.getElementById('authPw').value;
   if(!email||!pw){showToast('❌ E-Mail und Passwort ausfüllen');return;}
-  authTab==='login'?await doLogin(email,pw):await doSignup(email,pw);
+  authTab==='login'?doLogin(email,pw):doSignup(email,pw);
 }
 async function doSignup(email,pw){
+  if(!REGISTRATION_OPEN){showToast('🔒 Registrierung ist noch nicht freigeschaltet');return;}
   if(pw.length<6){showToast('❌ Passwort braucht mind. 6 Zeichen');return;}
   const btn=document.getElementById('authSubmitBtn');btn.textContent='Prüfe...';btn.disabled=true;
   try{
@@ -1023,6 +1095,7 @@ async function refreshAuthUI(){
   currentUser=data&&data.session?data.session.user:null;
   const btn=document.getElementById('accountBtn');
   const out=document.getElementById('accountLoggedOut'),into=document.getElementById('accountLoggedIn');
+  document.getElementById('accountSetNewPw').style.display='none';
   if(currentUser){
     btn.textContent='✓';btn.title='Eingeloggt';btn.classList.add('active');
     out.style.display='none';into.style.display='block';
@@ -1048,7 +1121,17 @@ function goToMySteckbrief(){
     if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});
   },150);
 }
-sb.auth.onAuthStateChange((_event,_session)=>{refreshAuthUI();});
+sb.auth.onAuthStateChange((event,_session)=>{
+  if(event==='PASSWORD_RECOVERY'){
+    document.getElementById('accountLoggedOut').style.display='none';
+    document.getElementById('accountLoggedIn').style.display='none';
+    document.getElementById('accountForgotPw').style.display='none';
+    document.getElementById('accountSetNewPw').style.display='block';
+    openModal('accountModal');
+    return;
+  }
+  refreshAuthUI();
+});
 
 // ── COUNTDOWN HELPER ──
 function cdDiff(datum){
