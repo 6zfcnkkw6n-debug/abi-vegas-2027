@@ -122,6 +122,7 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .sm-card:hover{border-color:var(--accent)}
 .sm-card.active{border-color:var(--accent);background:var(--bg-card)}
 .sm-card.own{border-color:var(--accent)}
+.sm-card.lehrer{border-color:var(--accent);background:linear-gradient(180deg,rgba(200,168,75,.1),transparent)}
 .sm-card-avatar{width:42px;height:42px;border-radius:50%;margin:0 auto .45rem;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1rem;font-weight:600;color:#fff;overflow:hidden}
 .sm-card-avatar img{width:100%;height:100%;object-fit:cover}
 .sm-card-name{font-size:.72rem;font-weight:600;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -979,7 +980,7 @@ async function loadSchuelerFromDb(){
   const{data,error}=await sb.from('schueler').select('*').order('idx',{ascending:true});
   if(error||!data||!data.length){console.warn('Schüler-Laden fehlgeschlagen, nutze lokalen Stand:',error);return;}
   SCHUELER=data.map(s=>({
-    idx:s.idx,ownerUserId:s.owner_user_id,
+    idx:s.idx,ownerUserId:s.owner_user_id,istLehrer:!!s.ist_lehrer,
     name:s.name,nick:s.nick||'',motto:s.motto||'',sport:s.sport||'',farbe:s.farbe||'#4A90D9',
     bio:s.bio||'',facts:s.facts||[],profilBild:s.profil_bild_url||'',
     sportImg1:s.sport_img1_url||'',sportImg1Label:s.sport_img1_label||'Bild 1',
@@ -1261,7 +1262,11 @@ function initSchueler(){
   renderSchuelerGrid();
 }
 function schuelerSortedIndices(){
-  return SCHUELER.map((s,i)=>i).sort((a,b)=>SCHUELER[a].name.localeCompare(SCHUELER[b].name,'de'));
+  return SCHUELER.map((s,i)=>i).sort((a,b)=>{
+    const la=SCHUELER[a].istLehrer,lb=SCHUELER[b].istLehrer;
+    if(la!==lb)return la?-1:1;
+    return SCHUELER[a].name.localeCompare(SCHUELER[b].name,'de');
+  });
 }
 function renderSchuelerGrid(query){
   const grid=document.getElementById('schuelerGrid');
@@ -1276,11 +1281,12 @@ function renderSchuelerGrid(query){
     const inits=s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
     const isOwn=!!(currentUser&&s.ownerUserId===currentUser.id);
     const card=document.createElement('div');
-    card.className='sm-card'+(isOwn?' own':'')+(openSchuelerIdx===i?' active':'');
+    card.className='sm-card'+(isOwn?' own':'')+(s.istLehrer?' lehrer':'')+(openSchuelerIdx===i?' active':'');
     const avatarHtml=s.profilBild
       ?`<div class="sm-card-avatar"><img src="${s.profilBild}" alt="${s.name}"></div>`
       :`<div class="sm-card-avatar" style="background:${s.farbe}">${inits}</div>`;
-    card.innerHTML=`${avatarHtml}<div class="sm-card-name">${s.name}${isOwn?' · Du':''}</div><div class="sm-card-sport">${s.sport}</div>`;
+    const tagHtml=s.istLehrer?'👩‍🏫 Klassenleitung':s.sport;
+    card.innerHTML=`${avatarHtml}<div class="sm-card-name">${s.name}${isOwn?' · Du':''}</div><div class="sm-card-sport">${tagHtml}</div>`;
     card.onclick=()=>toggleSchueler(i);
     grid.appendChild(card);
   });
@@ -1379,6 +1385,56 @@ async function saveSteckbrief(i){
   renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
   setTimeout(()=>{const el=document.querySelector('.sm-detail');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
 }
+// ── SPRUCH-GENERATOR ──
+// Mixt echte Mottos/Facts aus der Klasse zu neuen Vorschlägen. Kein externer API-Call -
+// läuft komplett im Browser, beliebig oft klickbar, Ergebnis bleibt normal editierbar.
+function collectSpruchFragmente(){
+  const mottoFragmente=[],factFragmente=[];
+  SCHUELER.forEach(s=>{
+    if(s.motto&&!/motto hier/i.test(s.motto)){
+      const clean=s.motto.replace(/^["„]+|["“]+$/g,'').trim();
+      if(clean)mottoFragmente.push(clean);
+    }
+    (s.facts||[]).forEach(f=>{
+      if(f&&!/fakt\s*\d/i.test(f))factFragmente.push(f.trim());
+    });
+  });
+  return{mottoFragmente,factFragmente};
+}
+const SPRUCH_TEMPLATES=[
+  v=>`${v.f1} und ${v.f2} – mehr braucht's nicht.`,
+  v=>`Mal ${v.f1}, mal ${v.f2}, immer ich.`,
+  v=>`"${v.m1}" – ist quasi mein Lebensmotto.`,
+  v=>`Wer mich kennt, weiß: ${v.f1}.`,
+  v=>`${v.f1}? Klar. ${v.f2}? Sowieso.`,
+  v=>`"${v.m1}" trifft's – genau wie ${v.f1}.`,
+  v=>`Bekannt für: ${v.f1}.`,
+  v=>`${v.f1}, ${v.f2} und ${v.f3} – das bin ich in drei Worten.`,
+  v=>`Zwischen "${v.m1}" und ${v.f1} irgendwo dazwischen.`,
+];
+function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function generateSpruchVorschlag(){
+  const{mottoFragmente,factFragmente}=collectSpruchFragmente();
+  if(factFragmente.length<2&&mottoFragmente.length<1){
+    showToast('Noch nicht genug Mottos/Facts von anderen da – später nochmal versuchen');
+    return;
+  }
+  const shuffledFacts=[...factFragmente].sort(()=>Math.random()-.5);
+  const shuffledMottos=[...mottoFragmente].sort(()=>Math.random()-.5);
+  const vars={
+    f1:shuffledFacts[0]||'einzigartig sein',
+    f2:shuffledFacts[1]||'einfach ich sein',
+    f3:shuffledFacts[2]||'niemals aufgeben',
+    m1:shuffledMottos[0]||'Alles ist möglich',
+  };
+  const input=document.getElementById('editMotto');
+  if(input.dataset.original===undefined)input.dataset.original=input.value;
+  input.value=pickRandom(SPRUCH_TEMPLATES)(vars);
+}
+function resetSpruch(){
+  const input=document.getElementById('editMotto');
+  if(input.dataset.original!==undefined){input.value=input.dataset.original;delete input.dataset.original;}
+}
 function buildSchuelerEditForm(i){
   const s=SCHUELER[i],d=editDraft;
   const inits=(s.name||'').split(' ').map(n=>n[0]).join('').substring(0,2);
@@ -1393,7 +1449,15 @@ function buildSchuelerEditForm(i){
     </div>
     <div class="form-field"><label>Profilbild</label><input type="file" accept="image/*" id="editProfilBildInput"></div>
     <div class="form-field"><label>Spitzname</label><input type="text" id="editNick" value="${escAttr(d.nick)}" placeholder="Spitzname"></div>
-    <div class="form-field"><label>Motto</label><input type="text" id="editMotto" value="${escAttr(d.motto)}" placeholder='&quot;Dein Motto&quot;'></div>
+    <div class="form-field">
+      <label>Motto</label>
+      <input type="text" id="editMotto" value="${escAttr(d.motto)}" placeholder='&quot;Dein Motto&quot;'>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="generateSpruchVorschlag()">🎲 Spruch-Idee</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="resetSpruch()">↺ Zurücksetzen</button>
+      </div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:.4rem">Mixt echte Mottos &amp; Facts der Klasse zu Vorschlägen – so oft klicken wie du willst, danach frei editierbar.</div>
+    </div>
     <div class="form-field"><label>Sportart (mit Emoji)</label><input type="text" id="editSport" value="${escAttr(d.sport)}" placeholder="🏃 Sportart"></div>
     <div class="form-field"><label>Farbe</label><input type="color" id="editFarbe" value="${d.farbe}" style="height:44px;padding:.2rem;cursor:pointer"></div>
     <div class="form-field"><label>Über mich</label><textarea id="editBio" rows="3">${escHtml(d.bio)}</textarea></div>
@@ -1424,7 +1488,8 @@ function buildSchuelerDetail(i){
   wrap.className='sm-detail';
   const isOwn=!!(currentUser&&s.ownerUserId===currentUser.id);
   const editBtnHtml=isOwn?`<button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="enterEditMode(${i})">✏️ Bearbeiten</button>`:'';
-  wrap.innerHTML=`<div class="sm-top">${avatarHtml}<div class="sm-info"><h2>${s.name}</h2><div class="sm-nick">„${s.nick}"</div><span class="sm-sport-tag">${s.sport}</span></div>${editBtnHtml}</div><div class="sm-motto">${s.motto}</div><p class="sm-bio">${s.bio}</p><div class="sm-facts">${factsHtml}</div><div class="sm-images"><div><div class="sm-img-wrap" id="${img1Id}"></div><div class="sm-img-label">${s.sportImg1Label}</div></div><div><div class="sm-img-wrap" id="${img2Id}"></div><div class="sm-img-label">${s.sportImg2Label}</div></div></div>`;
+  const tagHtml=s.istLehrer?'👩‍🏫 Klassenleitung':s.sport;
+  wrap.innerHTML=`<div class="sm-top">${avatarHtml}<div class="sm-info"><h2>${s.name}</h2><div class="sm-nick">„${s.nick}"</div><span class="sm-sport-tag">${tagHtml}</span></div>${editBtnHtml}</div><div class="sm-motto">${s.motto}</div><p class="sm-bio">${s.bio}</p><div class="sm-facts">${factsHtml}</div><div class="sm-images"><div><div class="sm-img-wrap" id="${img1Id}"></div><div class="sm-img-label">${s.sportImg1Label}</div></div><div><div class="sm-img-wrap" id="${img2Id}"></div><div class="sm-img-label">${s.sportImg2Label}</div></div></div>`;
   if(s.profilBild){
     const avatarEl=wrap.querySelector('.sm-avatar');
     if(avatarEl)avatarEl.onclick=()=>openImageViewer(currentSchuelerImgs,currentSchuelerImgs.indexOf(s.profilBild));
