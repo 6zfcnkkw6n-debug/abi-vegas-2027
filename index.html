@@ -57,6 +57,7 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .btn-primary{background:var(--accent);color:#fff}
 .btn-primary:hover{background:var(--accent-dark);transform:translateY(-1px);box-shadow:0 4px 14px rgba(200,168,75,.35)}
 .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-ghost.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
 .btn-sm{padding:.45rem .9rem;font-size:.74rem}
 /* COUNTDOWN */
@@ -127,7 +128,7 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .sm-card-sport{font-size:.63rem;color:var(--accent);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sm-card.hidden{display:none}
 .sm-detail{grid-column:1/-1;border-top:1px solid var(--border);padding-top:1.4rem;margin-top:.3rem}
-.sm-top{display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem}
+.sm-top{display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
 .sm-avatar{width:80px;height:80px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;font-weight:600;color:#fff}
 .sm-info h2{font-family:var(--font-display);font-size:1.8rem;font-weight:500;line-height:1.1;color:var(--text)}
 .sm-info .sm-nick{font-size:.8rem;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.12em;margin-top:.2rem}
@@ -350,6 +351,7 @@ footer strong{color:var(--text)}
   </ul>
   <div style="display:flex;align-items:center;gap:.6rem">
     <button class="nav-theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Hell/Dunkel umschalten">🌙</button>
+    <button class="nav-bell-btn" id="accountBtn" onclick="openModal('accountModal')" aria-label="Mein Login" title="Mein Login">👤</button>
     <button class="nav-bell-btn" id="bellBtn" onclick="openInbox()" aria-label="Nachrichten">🔔<span class="nav-bell-badge" id="inboxBadge" style="display:none">0</span></button>
     <button class="nav-hamburger" id="hamburger" onclick="toggleMobileMenu()" aria-label="Menü">
       <span></span><span></span><span></span>
@@ -403,6 +405,7 @@ footer strong{color:var(--text)}
   <a href="#galerie" onclick="closeMobileMenu()">Galerie</a>
   <a href="#gaestebuch" onclick="closeMobileMenu()">Gästebuch</a>
   <a href="#spiele" onclick="closeMobileMenu()">Spiele</a>
+  <a href="#" onclick="closeMobileMenu();openModal('accountModal');return false" id="mobileAccountLink">👤 Mein Login</a>
   <div class="mobile-suit">♠ ♥ ♦ ♣</div>
 </div>
 
@@ -606,6 +609,33 @@ footer strong{color:var(--text)}
     <div class="modal-body">
       <div class="form-field"><label>Passwort</label><input type="password" id="adminPw" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAdminPw()"></div>
       <button class="btn btn-primary" onclick="checkAdminPw()" style="width:100%;justify-content:center">Einloggen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="accountModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><div class="modal-title" id="accountModalTitle">Mein Login</div><div class="modal-sub" id="accountModalSub">Für deinen eigenen Steckbrief</div><button class="modal-close" onclick="closeModal('accountModal')">✕</button></div>
+    <div class="modal-body">
+
+      <div id="accountLoggedOut">
+        <div style="display:flex;gap:.4rem;margin-bottom:1.1rem">
+          <button class="btn btn-ghost btn-sm" id="authTabLogin" style="flex:1;justify-content:center" onclick="setAuthTab('login')">Einloggen</button>
+          <button class="btn btn-ghost btn-sm" id="authTabSignup" style="flex:1;justify-content:center" onclick="setAuthTab('signup')">Registrieren</button>
+        </div>
+        <div class="form-field"><label>E-Mail</label><input type="email" id="authEmail" placeholder="du@sportschulen-halle.de" autocomplete="email"></div>
+        <div class="form-field"><label>Passwort</label><input type="password" id="authPw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()"></div>
+        <div id="authHint" style="font-size:.78rem;color:var(--text-muted);margin:-.4rem 0 1rem;line-height:1.4"></div>
+        <button class="btn btn-primary" id="authSubmitBtn" onclick="submitAuth()" style="width:100%;justify-content:center">Einloggen</button>
+      </div>
+
+      <div id="accountLoggedIn" style="display:none">
+        <p style="font-size:.9rem;color:var(--text-muted);margin-bottom:.3rem">Eingeloggt als</p>
+        <p style="font-weight:600;margin-bottom:1.2rem;word-break:break-all" id="accountEmailLabel"></p>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:.6rem" onclick="goToMySteckbrief()">✏️ Meinen Steckbrief bearbeiten</button>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="doLogout()">Abmelden</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -930,6 +960,7 @@ async function loadSchuelerFromDb(){
   const{data,error}=await sb.from('schueler').select('*').order('idx',{ascending:true});
   if(error||!data||!data.length){console.warn('Schüler-Laden fehlgeschlagen, nutze lokalen Stand:',error);return;}
   SCHUELER=data.map(s=>({
+    idx:s.idx,ownerUserId:s.owner_user_id,
     name:s.name,nick:s.nick||'',motto:s.motto||'',sport:s.sport||'',farbe:s.farbe||'#4A90D9',
     bio:s.bio||'',facts:s.facts||[],profilBild:s.profil_bild_url||'',
     sportImg1:s.sport_img1_url||'',sportImg1Label:s.sport_img1_label||'Bild 1',
@@ -944,6 +975,80 @@ async function loadGaestebuchFromDb(){
     date:new Date(e.created_at).toLocaleDateString('de-DE',{day:'numeric',month:'long',year:'numeric'}),
   }));
 }
+
+// ── AUTH ──
+let currentUser=null,authTab='login';
+function setAuthTab(tab){
+  authTab=tab;
+  document.getElementById('authTabLogin').classList.toggle('active',tab==='login');
+  document.getElementById('authTabSignup').classList.toggle('active',tab==='signup');
+  document.getElementById('authSubmitBtn').textContent=tab==='login'?'Einloggen':'Account erstellen';
+  document.getElementById('authPw').autocomplete=tab==='login'?'current-password':'new-password';
+  document.getElementById('authHint').textContent=tab==='signup'?'Nur E-Mails aus der Klassenliste können sich registrieren. Passwort: mind. 6 Zeichen.':'';
+}
+async function submitAuth(){
+  const email=document.getElementById('authEmail').value.trim();
+  const pw=document.getElementById('authPw').value;
+  if(!email||!pw){showToast('❌ E-Mail und Passwort ausfüllen');return;}
+  authTab==='login'?await doLogin(email,pw):await doSignup(email,pw);
+}
+async function doSignup(email,pw){
+  if(pw.length<6){showToast('❌ Passwort braucht mind. 6 Zeichen');return;}
+  const btn=document.getElementById('authSubmitBtn');btn.textContent='Prüfe...';btn.disabled=true;
+  try{
+    const{data:erlaubt,error:checkErr}=await sb.rpc('email_erlaubt',{check_email:email});
+    if(checkErr){showToast('❌ Prüfung fehlgeschlagen, versuch es gleich nochmal');return;}
+    if(!erlaubt){showToast('❌ Diese E-Mail ist nicht in der Klassenliste hinterlegt');return;}
+    const{data,error}=await sb.auth.signUp({email,password:pw});
+    if(error){showToast('❌ '+error.message);return;}
+    if(data.session){showToast('🎉 Registriert & eingeloggt!');closeModal('accountModal');}
+    else{showToast('📧 Fast fertig – bestätige deine E-Mail, dann einloggen');setAuthTab('login');}
+  }finally{btn.disabled=false;setAuthTab(authTab);}
+}
+async function doLogin(email,pw){
+  const btn=document.getElementById('authSubmitBtn');btn.textContent='...';btn.disabled=true;
+  try{
+    const{error}=await sb.auth.signInWithPassword({email,password:pw});
+    if(error){showToast('❌ Login fehlgeschlagen – E-Mail/Passwort prüfen');return;}
+    showToast('Willkommen zurück ✓');closeModal('accountModal');
+  }finally{btn.disabled=false;setAuthTab(authTab);}
+}
+async function doLogout(){
+  await sb.auth.signOut();
+  showToast('Abgemeldet');
+  closeModal('accountModal');
+}
+async function refreshAuthUI(){
+  const{data}=await sb.auth.getSession();
+  currentUser=data&&data.session?data.session.user:null;
+  const btn=document.getElementById('accountBtn');
+  const out=document.getElementById('accountLoggedOut'),into=document.getElementById('accountLoggedIn');
+  if(currentUser){
+    btn.textContent='✓';btn.title='Eingeloggt';btn.classList.add('active');
+    out.style.display='none';into.style.display='block';
+    document.getElementById('accountEmailLabel').textContent=currentUser.email;
+    document.getElementById('accountModalTitle').textContent='Mein Account';
+  }else{
+    btn.textContent='👤';btn.title='Mein Login';btn.classList.remove('active');
+    out.style.display='block';into.style.display='none';
+    document.getElementById('accountModalTitle').textContent='Mein Login';
+    setAuthTab('login');
+  }
+  renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
+}
+function goToMySteckbrief(){
+  closeModal('accountModal');
+  const i=SCHUELER.findIndex(s=>currentUser&&s.ownerUserId===currentUser.id);
+  if(i<0){showToast('Dein Steckbrief ist noch nicht verknüpft – melde dich bei Julius');return;}
+  openModal('schuelerListModal');
+  openSchuelerIdx=i;
+  renderSchuelerGrid();
+  setTimeout(()=>{
+    const el=document.querySelector('.sm-detail');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  },150);
+}
+sb.auth.onAuthStateChange((_event,_session)=>{refreshAuthUI();});
 
 // ── COUNTDOWN HELPER ──
 function cdDiff(datum){
@@ -1047,11 +1152,6 @@ function closeMobileMenu(){
   document.body.style.overflow='';
 }
 
-// ── SCHÜLER ──
-// Platzhalter bis das echte Login/owner_user_id-System steht: hebt den eigenen Steckbrief hervor.
-// Sobald Auth existiert, hier durch echten Session-Abgleich (z.B. owner_user_id === auth.uid()) ersetzen.
-const MY_NAME_PLACEHOLDER='Julius Ulrich';
-let mySchuelerName=MY_NAME_PLACEHOLDER;
 let openSchuelerIdx=null;
 
 function initSchueler(){
@@ -1091,7 +1191,7 @@ function renderSchuelerGrid(query){
     if(!match)return;
     visible++;
     const inits=s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
-    const isOwn=s.name===mySchuelerName;
+    const isOwn=!!(currentUser&&s.ownerUserId===currentUser.id);
     const card=document.createElement('div');
     card.className='sm-card'+(isOwn?' own':'')+(openSchuelerIdx===i?' active':'');
     const avatarHtml=s.profilBild
@@ -1103,7 +1203,7 @@ function renderSchuelerGrid(query){
   });
   if(openSchuelerIdx!==null&&SCHUELER[openSchuelerIdx]){
     const stillVisible=!q||SCHUELER[openSchuelerIdx].name.toLowerCase().includes(q)||SCHUELER[openSchuelerIdx].sport.toLowerCase().includes(q);
-    if(stillVisible)grid.appendChild(buildSchuelerDetail(openSchuelerIdx));
+    if(stillVisible)grid.appendChild(editingIdx===openSchuelerIdx?buildSchuelerEditForm(openSchuelerIdx):buildSchuelerDetail(openSchuelerIdx));
   }
   const count=document.getElementById('schuelerCount');
   if(count)count.textContent=q?`${visible} Treffer von ${SCHUELER.length}`:`${SCHUELER.length} Personen`;
@@ -1120,6 +1220,114 @@ function toggleSchueler(i){
   }
 }
 let currentSchuelerImgs=[];
+function escAttr(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+let editingIdx=null,editDraft=null;
+function enterEditMode(i){
+  editingIdx=i;
+  editDraft={...SCHUELER[i],facts:[...SCHUELER[i].facts]};
+  renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
+  setTimeout(()=>{const el=document.querySelector('.sm-detail');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
+}
+function cancelEditMode(){
+  editingIdx=null;editDraft=null;
+  renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
+}
+function compressImage(file,maxDim,quality){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const reader=new FileReader();
+    reader.onload=e=>{img.src=e.target.result;};
+    reader.onerror=()=>reject(new Error('Lesen fehlgeschlagen'));
+    img.onload=()=>{
+      let w=img.width,h=img.height;
+      if(w>h&&w>maxDim){h=Math.round(h*maxDim/w);w=maxDim;}
+      else if(h>=w&&h>maxDim){w=Math.round(w*maxDim/h);h=maxDim;}
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      cv.toBlob(blob=>blob?resolve(blob):reject(new Error('Komprimierung fehlgeschlagen')),'image/jpeg',quality);
+    };
+    img.onerror=()=>reject(new Error('Bild ungültig'));
+    reader.readAsDataURL(file);
+  });
+}
+async function handleImageUpload(e,field,i){
+  const file=e.target.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){showToast('❌ Bitte ein Bild auswählen');return;}
+  if(file.size>15*1024*1024){showToast('❌ Datei zu groß (max. 15MB)');return;}
+  showToast('Bild wird hochgeladen...');
+  try{
+    const compressed=await compressImage(file,1280,.82);
+    const path=`${currentUser.id}/${field}_${Date.now()}.jpg`;
+    const{error:upErr}=await sb.storage.from('profile-photos').upload(path,compressed,{contentType:'image/jpeg',upsert:true});
+    if(upErr){showToast('❌ Upload fehlgeschlagen: '+upErr.message);return;}
+    const{data:urlData}=sb.storage.from('profile-photos').getPublicUrl(path);
+    editDraft[field]=urlData.publicUrl;
+    showToast('✓ Bild hochgeladen');
+    renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
+    setTimeout(()=>{const el=document.querySelector('.sm-detail');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
+  }catch(err){showToast('❌ Bild konnte nicht verarbeitet werden');}
+}
+async function saveSteckbrief(i){
+  if(!editDraft)return;
+  editDraft.facts=document.getElementById('editFacts').value.split(',').map(f=>f.trim()).filter(Boolean).slice(0,6);
+  editDraft.nick=document.getElementById('editNick').value.trim();
+  editDraft.motto=document.getElementById('editMotto').value.trim();
+  editDraft.sport=document.getElementById('editSport').value.trim();
+  editDraft.farbe=document.getElementById('editFarbe').value;
+  editDraft.bio=document.getElementById('editBio').value.trim();
+  editDraft.sportImg1Label=document.getElementById('editImg1Label').value.trim()||'Bild 1';
+  editDraft.sportImg2Label=document.getElementById('editImg2Label').value.trim()||'Bild 2';
+  const s=SCHUELER[i];
+  const btn=document.getElementById('saveSteckbriefBtn');
+  if(btn){btn.disabled=true;btn.textContent='Speichert...';}
+  const{error}=await sb.from('schueler').update({
+    nick:editDraft.nick,motto:editDraft.motto,sport:editDraft.sport,farbe:editDraft.farbe,bio:editDraft.bio,
+    facts:editDraft.facts,profil_bild_url:editDraft.profilBild,
+    sport_img1_url:editDraft.sportImg1,sport_img1_label:editDraft.sportImg1Label,
+    sport_img2_url:editDraft.sportImg2,sport_img2_label:editDraft.sportImg2Label,
+  }).eq('idx',s.idx);
+  if(btn){btn.disabled=false;btn.textContent='✓ Speichern';}
+  if(error){showToast('❌ Speichern fehlgeschlagen: '+error.message);return;}
+  Object.assign(SCHUELER[i],editDraft);
+  editingIdx=null;editDraft=null;
+  showToast('Steckbrief gespeichert ✓');
+  renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
+  setTimeout(()=>{const el=document.querySelector('.sm-detail');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
+}
+function buildSchuelerEditForm(i){
+  const s=SCHUELER[i],d=editDraft;
+  const inits=(s.name||'').split(' ').map(n=>n[0]).join('').substring(0,2);
+  const avatarPreview=d.profilBild
+    ?`<img src="${d.profilBild}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+    :`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${d.farbe};border-radius:50%;color:#fff;font-weight:700">${inits}</div>`;
+  const wrap=document.createElement('div');
+  wrap.className='sm-detail';
+  wrap.innerHTML=`
+    <div class="sm-top"><div class="sm-avatar" style="padding:0;overflow:hidden">${avatarPreview}</div>
+      <div class="sm-info"><h2>${s.name}</h2><div style="font-size:.75rem;color:var(--text-muted);margin-top:.2rem">✏️ Du bearbeitest deinen Steckbrief</div></div>
+    </div>
+    <div class="form-field"><label>Profilbild</label><input type="file" accept="image/*" id="editProfilBildInput"></div>
+    <div class="form-field"><label>Spitzname</label><input type="text" id="editNick" value="${escAttr(d.nick)}" placeholder="Spitzname"></div>
+    <div class="form-field"><label>Motto</label><input type="text" id="editMotto" value="${escAttr(d.motto)}" placeholder='&quot;Dein Motto&quot;'></div>
+    <div class="form-field"><label>Sportart (mit Emoji)</label><input type="text" id="editSport" value="${escAttr(d.sport)}" placeholder="🏃 Sportart"></div>
+    <div class="form-field"><label>Farbe</label><input type="color" id="editFarbe" value="${d.farbe}" style="height:44px;padding:.2rem;cursor:pointer"></div>
+    <div class="form-field"><label>Über mich</label><textarea id="editBio" rows="3">${escHtml(d.bio)}</textarea></div>
+    <div class="form-field"><label>Facts (mit Komma trennen, max. 6)</label><input type="text" id="editFacts" value="${escAttr(d.facts.join(', '))}" placeholder="🎹 Klavier, 🎧 DJ, 😴 Langschläfer"></div>
+    <div class="sm-images">
+      <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 1</label><input type="file" accept="image/*" id="editImg1Input"></div><input type="text" id="editImg1Label" value="${escAttr(d.sportImg1Label)}" placeholder="Bildunterschrift" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
+      <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 2</label><input type="file" accept="image/*" id="editImg2Input"></div><input type="text" id="editImg2Label" value="${escAttr(d.sportImg2Label)}" placeholder="Bildunterschrift" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
+    </div>
+    <div style="display:flex;gap:.6rem;margin-top:1.2rem">
+      <button class="btn btn-primary" id="saveSteckbriefBtn" style="flex:1;justify-content:center" onclick="saveSteckbrief(${i})">✓ Speichern</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="cancelEditMode()">Abbrechen</button>
+    </div>`;
+  wrap.querySelector('#editProfilBildInput').onchange=e=>handleImageUpload(e,'profilBild',i);
+  wrap.querySelector('#editImg1Input').onchange=e=>handleImageUpload(e,'sportImg1',i);
+  wrap.querySelector('#editImg2Input').onchange=e=>handleImageUpload(e,'sportImg2',i);
+  return wrap;
+}
 function buildSchuelerDetail(i){
   const s=SCHUELER[i];
   const inits=s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
@@ -1131,7 +1339,9 @@ function buildSchuelerDetail(i){
     :`<div class="sm-avatar" style="background:${s.farbe}">${inits}</div>`;
   const wrap=document.createElement('div');
   wrap.className='sm-detail';
-  wrap.innerHTML=`<div class="sm-top">${avatarHtml}<div class="sm-info"><h2>${s.name}</h2><div class="sm-nick">„${s.nick}"</div><span class="sm-sport-tag">${s.sport}</span></div></div><div class="sm-motto">${s.motto}</div><p class="sm-bio">${s.bio}</p><div class="sm-facts">${factsHtml}</div><div class="sm-images"><div><div class="sm-img-wrap" id="${img1Id}"></div><div class="sm-img-label">${s.sportImg1Label}</div></div><div><div class="sm-img-wrap" id="${img2Id}"></div><div class="sm-img-label">${s.sportImg2Label}</div></div></div>`;
+  const isOwn=!!(currentUser&&s.ownerUserId===currentUser.id);
+  const editBtnHtml=isOwn?`<button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="enterEditMode(${i})">✏️ Bearbeiten</button>`:'';
+  wrap.innerHTML=`<div class="sm-top">${avatarHtml}<div class="sm-info"><h2>${s.name}</h2><div class="sm-nick">„${s.nick}"</div><span class="sm-sport-tag">${s.sport}</span></div>${editBtnHtml}</div><div class="sm-motto">${s.motto}</div><p class="sm-bio">${s.bio}</p><div class="sm-facts">${factsHtml}</div><div class="sm-images"><div><div class="sm-img-wrap" id="${img1Id}"></div><div class="sm-img-label">${s.sportImg1Label}</div></div><div><div class="sm-img-wrap" id="${img2Id}"></div><div class="sm-img-label">${s.sportImg2Label}</div></div></div>`;
   if(s.profilBild){
     const avatarEl=wrap.querySelector('.sm-avatar');
     if(avatarEl)avatarEl.onclick=()=>openImageViewer(currentSchuelerImgs,currentSchuelerImgs.indexOf(s.profilBild));
@@ -1631,6 +1841,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb()]).finally(()=>{
     initSchueler();initSammelkarten();initGalerie();renderGb();updateKasseUI();drawGluecksrad();
+    refreshAuthUI();
     setTimeout(()=>{document.getElementById('kasseBar').style.width=Math.min(100,Math.round(kasseValue/KASSE_GOAL*100))+'%';},800);
   });
   updateCountdowns();
