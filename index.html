@@ -118,26 +118,29 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .schueler-modal-search input:focus{border-color:var(--accent)}
 .schueler-modal-count{font-size:.78rem;color:var(--text-muted);margin-bottom:.8rem}
 .schueler-modal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:.55rem}
-.sm-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.65rem .3rem;text-align:center;cursor:pointer;transition:background-color .15s,border-color .15s}
+.sm-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.65rem .3rem;text-align:center;cursor:pointer;transition:background-color .15s,border-color .15s,transform .15s,box-shadow .15s}
+.sm-card:hover{transform:translateY(-3px);box-shadow:0 6px 16px rgba(0,0,0,.12);border-color:var(--accent)}
 .sm-card:hover{border-color:var(--accent)}
 .sm-card.active{border-color:var(--accent);background:var(--bg-card)}
 .sm-card.own{border-color:var(--accent)}
 .sm-card.lehrer{border-color:var(--accent);background:linear-gradient(180deg,rgba(200,168,75,.1),transparent)}
-.sm-card-avatar{width:42px;height:42px;border-radius:50%;margin:0 auto .45rem;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1rem;font-weight:600;color:#fff;overflow:hidden}
+.sm-card-avatar{width:42px;height:42px;border-radius:50%;margin:0 auto .45rem;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1rem;font-weight:600;color:#fff;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.15),inset 0 0 0 2px rgba(255,255,255,.12)}
 .sm-card-avatar img{width:100%;height:100%;object-fit:cover}
 .sm-card-name{font-size:.72rem;font-weight:600;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sm-card-sport{font-size:.63rem;color:var(--accent);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sm-card.hidden{display:none}
-.sm-detail{grid-column:1/-1;border-top:1px solid var(--border);padding-top:1.4rem;margin-top:.3rem}
+.sm-detail{grid-column:1/-1;border-top:1px solid var(--border);padding-top:1.4rem;margin-top:.3rem;animation:smDetailFadeIn .25s ease}
+@keyframes smDetailFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .sm-top{display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
-.sm-avatar{width:80px;height:80px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;font-weight:600;color:#fff}
+.sm-avatar{width:80px;height:80px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;font-weight:600;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.2)}
 .sm-info h2{font-family:var(--font-display);font-size:1.8rem;font-weight:500;line-height:1.1;color:var(--text)}
 .sm-info .sm-nick{font-size:.8rem;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.12em;margin-top:.2rem}
 .sm-sport-tag{display:inline-block;margin-top:.4rem;font-size:.75rem;font-weight:500;background:var(--accent-light);color:var(--accent);padding:.25rem .7rem;border-radius:20px}
 .sm-motto{font-family:var(--font-display);font-size:1.15rem;font-style:italic;color:var(--text-muted);border-left:3px solid var(--accent);padding:.5rem 1rem;margin-bottom:1.2rem;background:var(--bg);border-radius:0 6px 6px 0}
 .sm-bio{font-size:.9rem;color:var(--text);line-height:1.75;margin-bottom:1.4rem}
 .sm-facts{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.5rem}
-.sm-fact{font-size:.78rem;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:.3rem .85rem;color:var(--text-muted)}
+.sm-fact{font-size:.78rem;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:.3rem .85rem;color:var(--text-muted);transition:border-color .15s,color .15s}
+.sm-fact:hover{border-color:var(--accent);color:var(--text)}
 .sm-images{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
 .sm-img-wrap{border-radius:10px;overflow:hidden;aspect-ratio:4/3;background:var(--bg)}
 .sm-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
@@ -710,6 +713,7 @@ footer strong{color:var(--text)}
   <div class="gallery-lb-header">
     <div class="gallery-lb-title" id="galleryLbTitle">Kategorie</div>
     <div class="gallery-lb-controls">
+      <label class="gallery-lb-btn" id="galleryUploadBtn" style="display:none;cursor:pointer">＋ Foto hinzufügen<input type="file" accept="image/*" style="display:none" onchange="uploadGaleriePhoto(event)"></label>
       <button class="gallery-lb-btn" id="slideshowBtn" onclick="toggleSlideshow()">▶ Diashow</button>
       <button class="gallery-lb-close" onclick="closeGalleryLightbox()">✕</button>
     </div>
@@ -822,54 +826,12 @@ const RARITY_LABELS={common:'Common',rare:'Rare',epic:'Epic',legendary:'Legendar
 
 // ✏️ GALERIE
 const GALERIE_KATEGORIEN=[
-  {
-    label:'Klassenfahrt 2025', emoji:'✈️', color:'#5B7FA6',
-    photos:[
-      {src:'',caption:'Anreise'},
-      {src:'',caption:'Ausflug Tag 1'},
-      {src:'',caption:'Gruppenphoto'},
-      {src:'',caption:'Abend am Lagerfeuer'},
-    ]
-  },
-  {
-    label:'Sportfeste', emoji:'🏆', color:'#A66B3A',
-    photos:[
-      {src:'',caption:'Staffellauf'},
-      {src:'',caption:'Mannschaftsfoto'},
-      {src:'',caption:'Siegerehrung'},
-    ]
-  },
-  {
-    label:'Weihnachtsfeier', emoji:'🎄', color:'#5B9E6B',
-    photos:[
-      {src:'',caption:'Klassenfeier'},
-      {src:'',caption:'Wichteln'},
-      {src:'',caption:'Gruppenfoto'},
-    ]
-  },
-  {
-    label:'Projektwoche', emoji:'🎨', color:'#9E5B7A',
-    photos:[
-      {src:'',caption:'Projekt Tag 1'},
-      {src:'',caption:'Präsentation'},
-      {src:'',caption:'Ergebnis'},
-    ]
-  },
-  {
-    label:'Kuchenbasar', emoji:'🎂', color:'#5B9EA0',
-    photos:[
-      {src:'',caption:'Aufbau'},
-      {src:'',caption:'Verkauf'},
-      {src:'',caption:'Erlös zählen'},
-    ]
-  },
-  {
-    label:'Abi Vegas Feier', emoji:'🎰', color:'#8B7355',
-    photos:[
-      {src:'',caption:'Bald...'},
-      {src:'',caption:'Bald...'},
-    ]
-  },
+  {label:'Klassenfahrt 2025', emoji:'✈️', color:'#5B7FA6', photos:[]},
+  {label:'Sportfeste', emoji:'🏆', color:'#A66B3A', photos:[]},
+  {label:'Weihnachtsfeier', emoji:'🎄', color:'#5B9E6B', photos:[]},
+  {label:'Projektwoche', emoji:'🎨', color:'#9E5B7A', photos:[]},
+  {label:'Kuchenbasar', emoji:'🎂', color:'#5B9EA0', photos:[]},
+  {label:'Abi Vegas Feier', emoji:'🎰', color:'#8B7355', photos:[]},
 ];
 
 // ── STATE ──
@@ -1489,7 +1451,11 @@ function buildSchuelerDetail(i){
   const isOwn=!!(currentUser&&s.ownerUserId===currentUser.id);
   const editBtnHtml=isOwn?`<button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="enterEditMode(${i})">✏️ Bearbeiten</button>`:'';
   const tagHtml=s.istLehrer?'👩‍🏫 Klassenleitung':s.sport;
-  wrap.innerHTML=`<div class="sm-top">${avatarHtml}<div class="sm-info"><h2>${s.name}</h2><div class="sm-nick">„${s.nick}"</div><span class="sm-sport-tag">${tagHtml}</span></div>${editBtnHtml}</div><div class="sm-motto">${s.motto}</div><p class="sm-bio">${s.bio}</p><div class="sm-facts">${factsHtml}</div><div class="sm-images"><div><div class="sm-img-wrap" id="${img1Id}"></div><div class="sm-img-label">${s.sportImg1Label}</div></div><div><div class="sm-img-wrap" id="${img2Id}"></div><div class="sm-img-label">${s.sportImg2Label}</div></div></div>`;
+  const nickHtml=s.nick?`<div class="sm-nick">„${s.nick}"</div>`:'';
+  const mottoHtml=s.motto?s.motto:`<span style="opacity:.55;font-style:italic">Steckbrief folgt in Kürze ${isOwn?'– klick auf Bearbeiten! ✏️':'👋'}</span>`;
+  const bioHtml=s.bio?s.bio:(s.motto?'':`<span style="opacity:.55">Hier gibt's bald mehr zu lesen.</span>`);
+  const factsHtml2=s.facts.length?factsHtml:'';
+  wrap.innerHTML=`<div class="sm-top">${avatarHtml}<div class="sm-info"><h2>${s.name}</h2>${nickHtml}<span class="sm-sport-tag">${tagHtml}</span></div>${editBtnHtml}</div><div class="sm-motto">${mottoHtml}</div><p class="sm-bio">${bioHtml}</p><div class="sm-facts">${factsHtml2}</div><div class="sm-images"><div><div class="sm-img-wrap" id="${img1Id}"></div><div class="sm-img-label">${s.sportImg1Label}</div></div><div><div class="sm-img-wrap" id="${img2Id}"></div><div class="sm-img-label">${s.sportImg2Label}</div></div></div>`;
   if(s.profilBild){
     const avatarEl=wrap.querySelector('.sm-avatar');
     if(avatarEl)avatarEl.onclick=()=>openImageViewer(currentSchuelerImgs,currentSchuelerImgs.indexOf(s.profilBild));
@@ -1743,6 +1709,47 @@ function drawThumb(canvas,color,emoji,label){
   ctx.font=`${Math.round(h*.28)}px serif`;ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillText(emoji,w/2,h*.48);
   ctx.font=`600 ${Math.round(h*.08)}px Outfit,sans-serif`;ctx.fillStyle='rgba(255,255,255,.95)';ctx.fillText(label,w/2,h*.78);
 }
+async function loadGalerieFromDb(){
+  const{data,error}=await sb.from('galerie_fotos').select('*').order('created_at',{ascending:true});
+  if(error){console.warn('Galerie-Laden fehlgeschlagen:',error);return;}
+  GALERIE_KATEGORIEN.forEach(kat=>{kat.photos=[];});
+  (data||[]).forEach(f=>{
+    const kat=GALERIE_KATEGORIEN.find(k=>k.label===f.kategorie);
+    if(kat)kat.photos.push({src:f.src_url,caption:f.caption||''});
+  });
+}
+async function uploadGaleriePhoto(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  if(!currentUser){showToast('❌ Dafür musst du eingeloggt sein');return;}
+  if(!file.type.startsWith('image/')){showToast('❌ Bitte ein Bild auswählen');return;}
+  if(file.size>15*1024*1024){showToast('❌ Datei zu groß (max. 15MB)');return;}
+  const kat=GALERIE_KATEGORIEN[galleryCurrentKat];
+  const caption=(prompt('Kurze Bildunterschrift (optional):')||'').trim().substring(0,80);
+  showToast('Bild wird hochgeladen...');
+  try{
+    const compressed=await compressImage(file,1600,.85);
+    const path=`${kat.label.replace(/\s+/g,'_')}/${currentUser.id}_${Date.now()}.jpg`;
+    const{error:upErr}=await sb.storage.from('gallery-photos').upload(path,compressed,{contentType:'image/jpeg'});
+    if(upErr){showToast('❌ Upload fehlgeschlagen: '+upErr.message);return;}
+    const{data:urlData}=sb.storage.from('gallery-photos').getPublicUrl(path);
+    const{error:insErr}=await sb.from('galerie_fotos').insert({kategorie:kat.label,src_url:urlData.publicUrl,caption,uploaded_by:currentUser.id});
+    if(insErr){showToast('❌ Speichern fehlgeschlagen: '+insErr.message);return;}
+    kat.photos.push({src:urlData.publicUrl,caption});
+    galleryCurrentIdx=kat.photos.length-1;
+    renderGalleryLb();
+    updateGalerieBadges();
+    showToast('✓ Foto hinzugefügt');
+  }catch(err){showToast('❌ Bild konnte nicht verarbeitet werden');}
+}
+function updateGalerieBadges(){
+  document.querySelectorAll('.galerie-cat').forEach((el,i)=>{
+    const badge=el.querySelector('.galerie-cat-badge'),count=el.querySelector('.galerie-cat-count');
+    const n=GALERIE_KATEGORIEN[i].photos.length;
+    if(badge)badge.textContent=`${n} Foto${n===1?'':'s'}`;
+    if(count)count.textContent=`${n} Foto${n===1?'':'s'} · Klicken zum Öffnen`;
+  });
+}
 function initGalerie(){
   const grid=document.getElementById('galerieGrid');
   GALERIE_KATEGORIEN.forEach((kat,ki)=>{
@@ -1768,21 +1775,33 @@ function openGalleryLightbox(ki){
 function closeGalleryLightbox(){stopSlideshow();document.getElementById('galleryLightbox').classList.remove('open');}
 function galleryNav(dir){
   const kat=GALERIE_KATEGORIEN[galleryCurrentKat];
+  if(!kat.photos.length)return;
   galleryCurrentIdx=(galleryCurrentIdx+dir+kat.photos.length)%kat.photos.length;
   renderGalleryLb();
 }
 function renderGalleryLb(){
   const kat=GALERIE_KATEGORIEN[galleryCurrentKat];
-  const photo=kat.photos[galleryCurrentIdx];
   const wrap=document.getElementById('galleryLbImgWrap');wrap.innerHTML='';
+  const uploadBtn=document.getElementById('galleryUploadBtn');
+  if(uploadBtn)uploadBtn.style.display=currentUser?'inline-flex':'none';
+  if(!kat.photos.length){
+    document.getElementById('galleryLbCaption').textContent='Noch keine Fotos in dieser Kategorie';
+    document.getElementById('galleryLbThumbs').innerHTML='';
+    const cv=document.createElement('canvas');cv.width=600;cv.height=400;wrap.appendChild(cv);
+    drawThumb(cv,kat.color,kat.emoji,currentUser?'Lade das erste Foto hoch!':'Noch leer');
+    document.getElementById('slideshowBtn').style.display='none';
+    return;
+  }
+  document.getElementById('slideshowBtn').style.display='inline-flex';
+  const photo=kat.photos[galleryCurrentIdx];
   if(photo.src){const img=document.createElement('img');img.src=photo.src;img.alt=photo.caption||'';wrap.appendChild(img);}
   else{const cv=document.createElement('canvas');cv.width=600;cv.height=400;wrap.appendChild(cv);drawThumb(cv,kat.color,kat.emoji,photo.caption||kat.label);}
   document.getElementById('galleryLbCaption').textContent=(photo.caption||'')+` (${galleryCurrentIdx+1}/${kat.photos.length})`;
   const thumbRow=document.getElementById('galleryLbThumbs');thumbRow.innerHTML='';
   kat.photos.forEach((p,i)=>{
     const thumb=document.createElement('div');thumb.className='gallery-lb-thumb'+(i===galleryCurrentIdx?' active':'');
-    const cv=document.createElement('canvas');cv.width=60;cv.height=45;thumb.appendChild(cv);
-    drawThumb(cv,kat.color,kat.emoji,p.caption||'');
+    if(p.src){const img=document.createElement('img');img.src=p.src;img.style.cssText='width:100%;height:100%;object-fit:cover';thumb.appendChild(img);}
+    else{const cv=document.createElement('canvas');cv.width=60;cv.height=45;thumb.appendChild(cv);drawThumb(cv,kat.color,kat.emoji,p.caption||'');}
     thumb.onclick=()=>{galleryCurrentIdx=i;renderGalleryLb();};
     thumbRow.appendChild(thumb);
     if(i===galleryCurrentIdx)setTimeout(()=>thumb.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}),50);
@@ -1987,7 +2006,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.documentElement.classList.add('dark');
     document.getElementById('themeBtn').textContent='☀️';
   }
-  Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb()]).finally(()=>{
+  Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb(),loadGalerieFromDb()]).finally(()=>{
     initSchueler();initSammelkarten();initGalerie();renderGb();updateKasseUI();drawGluecksrad();
     refreshAuthUI();
     setTimeout(()=>{document.getElementById('kasseBar').style.width=Math.min(100,Math.round(kasseValue/KASSE_GOAL*100))+'%';},800);
