@@ -645,7 +645,7 @@ footer strong{color:var(--text)}
       </div>
 
       <div id="accountSetNewPw" style="display:none">
-        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.4">Neues Passwort für deinen Account festlegen.</p>
+        <p id="newPwHint" style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.4">Neues Passwort für deinen Account festlegen.</p>
         <div class="form-field"><label>Neues Passwort</label><input type="password" id="newPwInput" placeholder="mind. 6 Zeichen" onkeydown="if(event.key==='Enter')submitNewPassword()"></div>
         <button class="btn btn-primary" id="newPwSubmitBtn" onclick="submitNewPassword()" style="width:100%;justify-content:center">✓ Passwort speichern</button>
       </div>
@@ -745,6 +745,10 @@ footer strong{color:var(--text)}
 // ── SUPABASE ──
 const SUPABASE_URL='https://ccumnubmscprtlyeeocg.supabase.co';
 const SUPABASE_KEY='sb_publishable_b_zsRCB3eW2a6ByB4GAe5A_cPOd15jc';
+// WICHTIG: Supabase loescht/verarbeitet den URL-Hash beim Client-Init automatisch.
+// Invite-Links (type=invite) loesen dabei NUR 'SIGNED_IN' aus, kein 'PASSWORD_RECOVERY' -
+// ohne diesen Check wuerde die Person still eingeloggt, ohne je ein Passwort gesetzt zu haben.
+let __isInviteLink=/type=invite/.test(window.location.hash)||/type=invite/.test(window.location.search);
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 // ✏️ MOTTOWOCHE
@@ -1088,11 +1092,14 @@ function goToMySteckbrief(){
   },150);
 }
 sb.auth.onAuthStateChange((event,_session)=>{
-  if(event==='PASSWORD_RECOVERY'){
+  const wasInvite=event==='SIGNED_IN'&&__isInviteLink;
+  if(event==='PASSWORD_RECOVERY'||wasInvite){
+    __isInviteLink=false; // nur beim ersten Login nach dem Invite-Klick erzwingen
     document.getElementById('accountLoggedOut').style.display='none';
     document.getElementById('accountLoggedIn').style.display='none';
     document.getElementById('accountForgotPw').style.display='none';
     document.getElementById('accountSetNewPw').style.display='block';
+    document.getElementById('newPwHint').textContent=wasInvite?'🎉 Willkommen bei Abi Vegas 2027! Leg jetzt dein eigenes Passwort fest.':'Neues Passwort für deinen Account festlegen.';
     openModal('accountModal');
     return;
   }
