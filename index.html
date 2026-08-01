@@ -124,6 +124,9 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .sm-card.active{border-color:var(--accent);background:var(--bg-card)}
 .sm-card.own{border-color:var(--accent)}
 .sm-card.lehrer{border-color:var(--accent);background:linear-gradient(180deg,rgba(200,168,75,.1),transparent)}
+.sm-card.ehemalig{border-color:var(--red);position:relative}
+.sm-card.ehemalig .sm-card-avatar{filter:grayscale(.35)}
+.sm-ehemalig-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600;color:var(--red);background:color-mix(in srgb,var(--red) 12%,transparent);border:1px solid color-mix(in srgb,var(--red) 40%,transparent);border-radius:20px;padding:.3rem .85rem;margin-bottom:1rem}
 .sm-card-avatar{width:42px;height:42px;border-radius:50%;margin:0 auto .45rem;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1rem;font-weight:600;color:#fff;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.15),inset 0 0 0 2px rgba(255,255,255,.12)}
 .sm-card-avatar img{width:100%;height:100%;object-fit:cover}
 .sm-card-name{font-size:.72rem;font-weight:600;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -978,7 +981,7 @@ async function loadSchuelerFromDb(){
   const{data,error}=await sb.from('schueler').select('*').order('idx',{ascending:true});
   if(error||!data||!data.length){console.warn('Schüler-Laden fehlgeschlagen, nutze lokalen Stand:',error);return;}
   SCHUELER=data.map(s=>({
-    idx:s.idx,ownerUserId:s.owner_user_id,istLehrer:!!s.ist_lehrer,
+    idx:s.idx,ownerUserId:s.owner_user_id,istLehrer:!!s.ist_lehrer,ehemalig:!!s.ehemalig,
     name:s.name,nick:s.nick||'',motto:s.motto||'',sport:s.sport||'',farbe:s.farbe||'#4A90D9',
     bio:s.bio||'',facts:s.facts||[],profilBild:s.profil_bild_url||'',
     sportImg1:s.sport_img1_url||'',sportImg1Label:s.sport_img1_label||'Bild 1',
@@ -1291,7 +1294,7 @@ function renderSchuelerGrid(query){
     const inits=s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
     const isOwn=!!(currentUser&&s.ownerUserId===currentUser.id);
     const card=document.createElement('div');
-    card.className='sm-card'+(isOwn?' own':'')+(s.istLehrer?' lehrer':'')+(openSchuelerIdx===i?' active':'');
+    card.className='sm-card'+(isOwn?' own':'')+(s.istLehrer?' lehrer':'')+(s.ehemalig?' ehemalig':'')+(openSchuelerIdx===i?' active':'');
     const avatarHtml=s.profilBild
       ?`<div class="sm-card-avatar"><img src="${s.profilBild}" alt="${s.name}"></div>`
       :`<div class="sm-card-avatar" style="background:${s.farbe}">${inits}</div>`;
@@ -1554,7 +1557,8 @@ function buildSchuelerDetail(i){
   const mottoHtml=s.motto?s.motto:`<span style="opacity:.55;font-style:italic">Steckbrief folgt in Kürze ${isOwn?'– klick auf Bearbeiten! ✏️':'👋'}</span>`;
   const bioHtml=s.bio?s.bio:(s.motto?'':`<span style="opacity:.55">Hier gibt's bald mehr zu lesen.</span>`);
   const factsHtml2=s.facts.length?factsHtml:'';
-  wrap.innerHTML=`<div class="sm-top">${avatarHtml}<div class="sm-info"><h2>${s.name}</h2>${nickHtml}<span class="sm-sport-tag">${tagHtml}</span></div>${editBtnHtml}</div><div class="sm-motto">${mottoHtml}</div><p class="sm-bio">${bioHtml}</p><div class="sm-facts">${factsHtml2}</div><div class="sm-images"><div><div class="sm-img-wrap" id="${img1Id}"></div><div class="sm-img-label">${s.sportImg1Label}</div></div><div><div class="sm-img-wrap" id="${img2Id}"></div><div class="sm-img-label">${s.sportImg2Label}</div></div></div>`;
+  const ehemaligHtml=s.ehemalig?`<div class="sm-ehemalig-badge">🕊️ Nicht mehr Teil des Jahrgangs – aber immer ein Stück Abi Vegas 2027</div>`:'';
+  wrap.innerHTML=`<div class="sm-top">${avatarHtml}<div class="sm-info"><h2>${s.name}</h2>${nickHtml}<span class="sm-sport-tag">${tagHtml}</span></div>${editBtnHtml}</div>${ehemaligHtml}<div class="sm-motto">${mottoHtml}</div><p class="sm-bio">${bioHtml}</p><div class="sm-facts">${factsHtml2}</div><div class="sm-images"><div><div class="sm-img-wrap" id="${img1Id}"></div><div class="sm-img-label">${s.sportImg1Label}</div></div><div><div class="sm-img-wrap" id="${img2Id}"></div><div class="sm-img-label">${s.sportImg2Label}</div></div></div>`;
   if(s.profilBild){
     const avatarEl=wrap.querySelector('.sm-avatar');
     if(avatarEl)avatarEl.onclick=()=>openImageViewer(currentSchuelerImgs,currentSchuelerImgs.indexOf(s.profilBild));
