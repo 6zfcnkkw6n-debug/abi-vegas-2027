@@ -176,9 +176,15 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .karte-slot.flipped .karte-inner{transform:rotateY(180deg)}
 .karte-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.6rem;box-shadow:var(--shadow);transition:box-shadow .25s,background-color .4s ease,border-color .4s ease}
 .karte-slot:hover .karte-face{box-shadow:var(--shadow-h)}
-.karte-back{background:repeating-linear-gradient(135deg,var(--bg-card),var(--bg-card) 6px,var(--accent-light) 6px,var(--accent-light) 12px)}
-.karte-back-mark{font-size:1.8rem;opacity:.55}
-.karte-front{background:linear-gradient(160deg,var(--bg-card),var(--accent-light));transform:rotateY(180deg)}
+.karte-back{
+  background:
+    repeating-linear-gradient(45deg,rgba(244,197,66,.14) 0 2px,transparent 2px 20px),
+    repeating-linear-gradient(-45deg,rgba(244,197,66,.14) 0 2px,transparent 2px 20px),
+    radial-gradient(ellipse at center,#7a1c33,#3a0d18 78%);
+  border-color:rgba(244,197,66,.4)!important;
+}
+.karte-back-mark{font-size:2.1rem;opacity:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));background:radial-gradient(circle,rgba(244,197,66,.22),transparent 70%);width:2.6em;height:2.6em;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1.5px solid rgba(244,197,66,.55)}
+.karte-front{background:linear-gradient(160deg,var(--bg-card),var(--rarity-glow,var(--accent-light)));transform:rotateY(180deg)}
 .karte-rarity-badge{position:absolute;top:.5rem;right:.5rem;font-size:.56rem;font-weight:700;letter-spacing:.03em;padding:.15rem .5rem;border-radius:10px;text-transform:uppercase;color:#fff}
 .karte-emoji{font-size:2rem;margin-bottom:.5rem}
 .karte-name{font-family:var(--font-display);font-size:.88rem;font-weight:600;text-align:center;line-height:1.2;color:var(--text)}
@@ -1525,7 +1531,7 @@ function buildKarteSlot(idx,skipClick){
   el.dataset.rarity=k.rarity;
   el.innerHTML=`<div class="karte-inner">
       <div class="karte-face karte-back"><div class="karte-back-mark">🂠</div></div>
-      <div class="karte-face karte-front"><div class="karte-rarity-badge" style="background:${RARITY_COLORS[k.rarity]}">${RARITY_LABELS[k.rarity]}</div><div class="karte-emoji">${k.emoji}</div><div class="karte-name">${k.name}</div><div class="karte-fach">${k.fach}</div></div>
+      <div class="karte-face karte-front" style="--rarity-glow:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 38%,transparent)"><div class="karte-rarity-badge" style="background:${RARITY_COLORS[k.rarity]}">${RARITY_LABELS[k.rarity]}</div><div class="karte-emoji">${k.emoji}</div><div class="karte-name">${k.name}</div><div class="karte-fach">${k.fach}</div></div>
     </div>`;
   if(!skipClick){
     el.addEventListener('click',()=>{
@@ -1737,13 +1743,16 @@ function drawThumb(canvas,color,emoji,label){
   for(let i=0;i<600;i++){ctx.fillStyle=`rgba(255,255,255,${Math.random()*.05})`;ctx.fillRect(Math.random()*w,Math.random()*h,2,2);}
   ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
   for(let i=-h;i<w+h;i+=24){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+h,h);ctx.stroke();}
-  // Polaroid-Icon statt Emoji: kleines Foto-Symbol mit Mini-Landschaft
-  const pw=h*.34,ph=h*.4,px=w/2-pw/2,py=h*.1;
+  // Polaroid-Icon statt Emoji: kleines Foto-Symbol mit Mini-Landschaft, leicht verkippt (verspielter, wie hingeworfen)
+  let seed=0;for(let i=0;i<label.length;i++)seed+=label.charCodeAt(i);
+  const tilt=((seed%7)-3)*.035; // ~ -6° bis +6°, stabil pro Label statt jedes Mal neu zufaellig
   ctx.save();
+  ctx.translate(w/2,h*.32);ctx.rotate(tilt);ctx.translate(-w/2,-h*.32);
+  const pw=h*.34,ph=h*.4,px=w/2-pw/2,py=h*.1;
   ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=Math.max(4,h*.03);ctx.shadowOffsetY=h*.012;
   ctx.fillStyle='rgba(255,255,255,.94)';
   roundRectPath(ctx,px,py,pw,ph,Math.max(2,h*.012));ctx.fill();
-  ctx.restore();
+  ctx.shadowColor='transparent';
   const pad=pw*.09,iw=pw-pad*2,ih=ph*.72,ix=px+pad,iy=py+pad;
   const ig=ctx.createLinearGradient(ix,iy,ix,iy+ih);
   ig.addColorStop(0,shadeColor(color,35));ig.addColorStop(1,color);
@@ -1757,6 +1766,13 @@ function drawThumb(canvas,color,emoji,label){
   ctx.lineTo(ix+iw*.72,iy+ih*.36);
   ctx.lineTo(ix+iw,iy+ih*.82);
   ctx.stroke();
+  // kleines Klebeband-Eck oben, schraeg - Scrapbook-Feeling
+  ctx.save();
+  ctx.translate(px+pw*.5,py-ph*.03);ctx.rotate(-.5);
+  ctx.fillStyle='rgba(244,197,66,.55)';
+  ctx.fillRect(-pw*.22,-ph*.045,pw*.44,ph*.09);
+  ctx.restore();
+  ctx.restore();
   const fade=ctx.createLinearGradient(0,h*.55,0,h);fade.addColorStop(0,'rgba(0,0,0,0)');fade.addColorStop(1,'rgba(0,0,0,.55)');
   ctx.fillStyle=fade;ctx.fillRect(0,0,w,h);
   ctx.textAlign='center';
