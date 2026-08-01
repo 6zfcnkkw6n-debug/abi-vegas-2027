@@ -630,11 +630,13 @@ footer strong{color:var(--text)}
           <button class="btn btn-ghost btn-sm" id="authTabLogin" style="flex:1;justify-content:center" onclick="setAuthTab('login')">Einloggen</button>
           <button class="btn btn-ghost btn-sm" id="authTabSignup" style="flex:1;justify-content:center" onclick="setAuthTab('signup')">Registrieren</button>
         </div>
-        <div class="form-field"><label>E-Mail</label><input type="email" id="authEmail" placeholder="du@sportschulen-halle.de" autocomplete="email"></div>
-        <div class="form-field"><label>Passwort</label><input type="password" id="authPw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()"></div>
+        <form id="authForm" onsubmit="event.preventDefault();submitAuth()">
+        <div class="form-field"><label>E-Mail</label><input type="email" id="authEmail" placeholder="du@sportschulen-halle.de" autocomplete="username"></div>
+        <div class="form-field"><label>Passwort</label><input type="password" id="authPw" placeholder="••••••••" autocomplete="current-password"></div>
         <div style="text-align:right;margin:-.7rem 0 1rem" id="forgotPwLinkWrap"><a href="#" onclick="showForgotPassword();return false" style="font-size:.78rem;color:var(--text-muted)">Passwort vergessen?</a></div>
         <div id="authHint" style="font-size:.78rem;color:var(--text-muted);margin:-.4rem 0 1rem;line-height:1.4"></div>
-        <button class="btn btn-primary" id="authSubmitBtn" onclick="submitAuth()" style="width:100%;justify-content:center">Einloggen</button>
+        <button class="btn btn-primary" type="submit" id="authSubmitBtn" style="width:100%;justify-content:center">Einloggen</button>
+        </form>
       </div>
 
       <div id="accountForgotPw" style="display:none">
@@ -1033,6 +1035,11 @@ function submitAuth(){
   if(!email||!pw){showToast('❌ E-Mail und Passwort ausfüllen');return;}
   authTab==='login'?doLogin(email,pw):doSignup(email,pw);
 }
+async function offerSaveCredential(email,pw){
+  if(window.PasswordCredential){
+    try{ await navigator.credentials.store(new PasswordCredential({id:email,password:pw})); }catch(e){}
+  }
+}
 async function doSignup(email,pw){
   if(!REGISTRATION_OPEN){showToast('🔒 Registrierung ist noch nicht freigeschaltet');return;}
   if(pw.length<6){showToast('❌ Passwort braucht mind. 6 Zeichen');return;}
@@ -1043,6 +1050,7 @@ async function doSignup(email,pw){
     if(!erlaubt){showToast('❌ Diese E-Mail ist nicht in der Klassenliste hinterlegt');return;}
     const{data,error}=await sb.auth.signUp({email,password:pw});
     if(error){showToast('❌ '+error.message);return;}
+    await offerSaveCredential(email,pw);
     if(data.session){showToast('🎉 Registriert & eingeloggt!');closeModal('accountModal');}
     else{showToast('📧 Fast fertig – bestätige deine E-Mail, dann einloggen');setAuthTab('login');}
   }finally{btn.disabled=false;setAuthTab(authTab);}
@@ -1052,6 +1060,7 @@ async function doLogin(email,pw){
   try{
     const{error}=await sb.auth.signInWithPassword({email,password:pw});
     if(error){showToast('❌ Login fehlgeschlagen – E-Mail/Passwort prüfen');return;}
+    await offerSaveCredential(email,pw);
     showToast('Willkommen zurück ✓');closeModal('accountModal');
   }finally{btn.disabled=false;setAuthTab(authTab);}
 }
@@ -1215,9 +1224,15 @@ function initSchueler(){
   const modalBody=document.querySelector('#schuelerModalBox .modal-body');
   const modalBox=document.getElementById('schuelerModalBox');
   if(modalBody&&modalBox){
+    let smTicking=false;
     modalBody.addEventListener('scroll',()=>{
-      modalBox.classList.toggle('sm-scrolled',modalBody.scrollTop>16);
-    });
+      if(smTicking)return;
+      smTicking=true;
+      requestAnimationFrame(()=>{
+        modalBox.classList.toggle('sm-scrolled',modalBody.scrollTop>16);
+        smTicking=false;
+      });
+    },{passive:true});
   }
   SCHUELER.slice(0,8).forEach((s)=>{
     const inits=s.name.split(' ').map(n=>n[0]).join('').substring(0,2);
@@ -2037,7 +2052,15 @@ async function checkMottoReminder(){
 
 // ── SCROLL & REVEAL ──
 const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.08,rootMargin:'0px 0px -40px 0px'});
-window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',scrollY>60));
+let navTicking=false;
+window.addEventListener('scroll',()=>{
+  if(navTicking)return;
+  navTicking=true;
+  requestAnimationFrame(()=>{
+    document.getElementById('navbar').classList.toggle('scrolled',scrollY>60);
+    navTicking=false;
+  });
+},{passive:true});
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded',()=>{
