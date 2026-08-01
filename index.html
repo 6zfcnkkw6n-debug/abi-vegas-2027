@@ -146,6 +146,19 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .sm-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
 .sm-img-label{font-size:.72rem;color:var(--text-muted);text-align:center;margin-top:.4rem}
 /* REMINDER BANNER */
+/* STECKBRIEF VOLLBILD (eigene Seite statt Modal-Ausklappen) */
+.steckbrief-fullscreen{position:fixed;inset:0;z-index:600;background:var(--bg);transform:translateX(100%);transition:transform .34s cubic-bezier(.22,.61,.36,1);overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.steckbrief-fullscreen.open{transform:translateX(0)}
+.steckbrief-fullscreen.dragging{transition:none}
+.sf-header{position:sticky;top:0;background:var(--nav-bg);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:.9rem 1.2rem;z-index:2;display:flex;align-items:center;gap:.8rem}
+.sf-back{background:none;border:1px solid var(--border);border-radius:9px;width:40px;height:40px;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);transition:border-color .2s,background-color .2s;flex-shrink:0}
+.sf-back:hover{border-color:var(--accent);background:var(--accent-light)}
+.sf-hint{font-size:.72rem;color:var(--text-muted);letter-spacing:.02em}
+.sf-body{padding:1.6rem 1.5rem 3.5rem;max-width:640px;margin:0 auto}
+.sf-body .sm-detail{border-top:none;margin-top:0;padding-top:0}
+@media (min-width:701px){.sf-hint{display:inline}}
+@media (max-width:700px){.sf-hint{display:none}}
+
 /* PRÜFUNGEN & MOTTOWOCHE */
 .pf-grid{display:flex;flex-direction:column;gap:.7rem}
 .pf-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.9rem 1.2rem;gap:1rem;flex-wrap:wrap}
@@ -693,6 +706,14 @@ footer strong{color:var(--text)}
   </div>
 </div>
 
+<div class="steckbrief-fullscreen" id="steckbriefFullscreen">
+  <div class="sf-header">
+    <button class="sf-back" onclick="closeSteckbriefFullscreen()" aria-label="Zurück">←</button>
+    <span class="sf-hint">Zurück auch per Wisch vom linken Rand oder Esc</span>
+  </div>
+  <div class="sf-body" id="steckbriefFullscreenBody"></div>
+</div>
+
 <!-- SAMMELKARTE DETAIL MODAL -->
 <div class="modal-overlay" id="karteModal">
   <div class="modal" style="max-width:400px">
@@ -1099,12 +1120,8 @@ function goToMySteckbrief(){
   const i=SCHUELER.findIndex(s=>currentUser&&s.ownerUserId===currentUser.id);
   if(i<0){showToast('Dein Steckbrief ist noch nicht verknüpft – melde dich bei Julius');return;}
   openModal('schuelerListModal');
-  openSchuelerIdx=i;
   renderSchuelerGrid();
-  setTimeout(()=>{
-    const el=document.querySelector('.sm-detail');
-    if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});
-  },150);
+  openSteckbriefFullscreen(i);
 }
 sb.auth.onAuthStateChange((event,_session)=>{
   const wasInvite=event==='SIGNED_IN'&&__isInviteLink;
@@ -1283,23 +1300,14 @@ function renderSchuelerGrid(query){
     card.onclick=()=>toggleSchueler(i);
     grid.appendChild(card);
   });
-  if(openSchuelerIdx!==null&&SCHUELER[openSchuelerIdx]){
-    const stillVisible=!q||SCHUELER[openSchuelerIdx].name.toLowerCase().includes(q)||SCHUELER[openSchuelerIdx].sport.toLowerCase().includes(q);
-    if(stillVisible)grid.appendChild(editingIdx===openSchuelerIdx?buildSchuelerEditForm(openSchuelerIdx):buildSchuelerDetail(openSchuelerIdx));
-  }
   const count=document.getElementById('schuelerCount');
   if(count)count.textContent=q?`${visible} Treffer von ${SCHUELER.length}`:`${SCHUELER.length} Personen`;
 }
 function filterSchueler(query){renderSchuelerGrid(query);}
 function toggleSchueler(i){
-  openSchuelerIdx=openSchuelerIdx===i?null:i;
+  openSchuelerIdx=i;
   renderSchuelerGrid(document.getElementById('schuelerSearch').value);
-  if(openSchuelerIdx!==null){
-    setTimeout(()=>{
-      const el=document.querySelector('.sm-detail');
-      if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});
-    },50);
-  }
+  openSteckbriefFullscreen(i);
 }
 let currentSchuelerImgs=[];
 function escAttr(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
@@ -1308,13 +1316,74 @@ let editingIdx=null,editDraft=null;
 function enterEditMode(i){
   editingIdx=i;
   editDraft={...SCHUELER[i],facts:[...SCHUELER[i].facts]};
-  renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
-  setTimeout(()=>{const el=document.querySelector('.sm-detail');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
+  renderSteckbriefFullscreenBody();
 }
 function cancelEditMode(){
   editingIdx=null;editDraft=null;
+  renderSteckbriefFullscreenBody();
+}
+
+// ── STECKBRIEF VOLLBILD ──
+function renderSteckbriefFullscreenBody(){
+  const body=document.getElementById('steckbriefFullscreenBody');
+  if(!body||openSchuelerIdx===null||!SCHUELER[openSchuelerIdx])return;
+  body.innerHTML='';
+  body.appendChild(editingIdx===openSchuelerIdx?buildSchuelerEditForm(openSchuelerIdx):buildSchuelerDetail(openSchuelerIdx));
+}
+function openSteckbriefFullscreen(i){
+  openSchuelerIdx=i;
+  renderSteckbriefFullscreenBody();
+  const sf=document.getElementById('steckbriefFullscreen');
+  sf.classList.add('open');
+  sf.scrollTop=0;
+  document.body.style.overflow='hidden';
+}
+function closeSteckbriefFullscreen(){
+  const sf=document.getElementById('steckbriefFullscreen');
+  sf.classList.remove('open');
+  document.body.style.overflow='';
+  editingIdx=null;editDraft=null;
+  openSchuelerIdx=null;
   renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
 }
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&document.getElementById('steckbriefFullscreen').classList.contains('open')){
+    closeSteckbriefFullscreen();
+  }
+});
+(function(){
+  const sf=document.getElementById('steckbriefFullscreen');
+  const EDGE=28,THRESHOLD=90;
+  let startX=0,startY=0,dx=0,active=false,decided=false,horizontal=false;
+  sf.addEventListener('touchstart',e=>{
+    if(!sf.classList.contains('open'))return;
+    const t=e.touches[0];
+    if(t.clientX>EDGE)return; // nur vom linken Rand aus starten
+    startX=t.clientX;startY=t.clientY;dx=0;active=true;decided=false;horizontal=false;
+  },{passive:true});
+  sf.addEventListener('touchmove',e=>{
+    if(!active)return;
+    const t=e.touches[0];
+    dx=t.clientX-startX;
+    const dy=t.clientY-startY;
+    if(!decided){
+      decided=true;
+      horizontal=Math.abs(dx)>Math.abs(dy)*1.3;
+      if(horizontal)sf.classList.add('dragging');
+      else{active=false;return;}
+    }
+    if(horizontal&&dx>0){
+      sf.style.transform=`translateX(${dx}px)`;
+    }
+  },{passive:true});
+  sf.addEventListener('touchend',()=>{
+    if(!active||!horizontal){active=false;return;}
+    sf.classList.remove('dragging');
+    sf.style.transform='';
+    if(dx>THRESHOLD){closeSteckbriefFullscreen();}
+    active=false;
+  });
+})();
 function compressImage(file,maxDim,quality){
   return new Promise((resolve,reject)=>{
     const img=new Image();
@@ -1347,8 +1416,7 @@ async function handleImageUpload(e,field,i){
     const{data:urlData}=sb.storage.from('profile-photos').getPublicUrl(path);
     editDraft[field]=urlData.publicUrl;
     showToast('✓ Bild hochgeladen');
-    renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
-    setTimeout(()=>{const el=document.querySelector('.sm-detail');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
+    renderSteckbriefFullscreenBody();
   }catch(err){showToast('❌ Bild konnte nicht verarbeitet werden');}
 }
 async function saveSteckbrief(i){
@@ -1375,8 +1443,8 @@ async function saveSteckbrief(i){
   Object.assign(SCHUELER[i],editDraft);
   editingIdx=null;editDraft=null;
   showToast('Steckbrief gespeichert ✓');
+  renderSteckbriefFullscreenBody();
   renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
-  setTimeout(()=>{const el=document.querySelector('.sm-detail');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
 }
 // ── SPRUCH-GENERATOR ──
 // Mixt echte Mottos/Facts aus der Klasse zu neuen Vorschlägen. Kein externer API-Call -
