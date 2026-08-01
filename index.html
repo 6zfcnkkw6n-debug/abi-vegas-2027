@@ -1047,7 +1047,7 @@ async function doSignup(email,pw){
   try{
     const{data:erlaubt,error:checkErr}=await sb.rpc('email_erlaubt',{check_email:email});
     if(checkErr){showToast('❌ Prüfung fehlgeschlagen, versuch es gleich nochmal');return;}
-    if(!erlaubt){showToast('❌ Diese E-Mail ist nicht in der Klassenliste hinterlegt');return;}
+    if(!erlaubt){showToast('❌ Oops, du hast keine Berechtigung für einen Account');return;}
     const{data,error}=await sb.auth.signUp({email,password:pw});
     if(error){showToast('❌ '+error.message);return;}
     await offerSaveCredential(email,pw);
