@@ -613,7 +613,68 @@ footer strong{color:var(--text)}
   </div>
 </section>
 
-<footer><strong>Abi Vegas 2027 · Sportschule Halle</strong><br><span style="display:block;margin-top:.3rem">Mit ❤️ von der Klasse gebaut</span><span class="footer-suits">♠ ♥ ♦ ♣</span></footer>
+<footer><strong>Abi Vegas 2027 · Sportschule Halle</strong><br><span style="display:block;margin-top:.3rem">Mit ❤️ von der Klasse gebaut</span><span class="footer-suits">♠ ♥ ♦ ♣</span><span style="display:block;margin-top:1rem;font-size:.75rem"><a href="#" onclick="openModal('impressumModal');return false" style="color:var(--text-muted);text-decoration:underline">Impressum</a> &nbsp;·&nbsp; <a href="#" onclick="openModal('datenschutzModal');return false" style="color:var(--text-muted);text-decoration:underline">Datenschutz</a></span></footer>
+
+<!-- IMPRESSUM MODAL -->
+<div class="modal-overlay" id="impressumModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header"><div class="modal-title">Impressum</div><div class="modal-sub">Angaben gemäß § 5 DDG</div><button class="modal-close" onclick="closeModal('impressumModal')">✕</button></div>
+    <div class="modal-body" style="font-size:.85rem;line-height:1.6">
+      <p style="background:rgba(200,160,60,.12);border:1px solid var(--border);border-radius:8px;padding:.7rem .9rem;font-size:.78rem;color:var(--text-muted);margin-bottom:1.2rem">⚠️ Platzhalter – Verantwortliche Person noch nicht final geklärt. Diese Seite ist erst vollständig, sobald hier ein echter Name + Kontakt eingetragen ist.</p>
+      <p><strong>Verantwortlich für den Inhalt:</strong><br>
+      [PLATZHALTER NAME]<br>
+      [PLATZHALTER ANSCHRIFT – ladungsfähig, z.B. Privatadresse oder Schuladresse]<br>
+      E-Mail: [PLATZHALTER E-MAIL]</p>
+      <p style="margin-top:1rem"><strong>Hinweis:</strong> Diese Website ist ein privates, nicht-kommerzielles Projekt einer Abiturklasse der Sportschule Halle und dient ausschließlich dem internen Austausch des Jahrgangs 2027. Es werden keine Waren oder Dienstleistungen verkauft.</p>
+      <p style="margin-top:1rem"><strong>Streitschlichtung:</strong> Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit. Wir sind nicht verpflichtet und nicht bereit, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>
+    </div>
+  </div>
+</div>
+
+<!-- DATENSCHUTZ MODAL -->
+<div class="modal-overlay" id="datenschutzModal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header"><div class="modal-title">Datenschutzerklärung</div><div class="modal-sub">Stand: [PLATZHALTER DATUM]</div><button class="modal-close" onclick="closeModal('datenschutzModal')">✕</button></div>
+    <div class="modal-body" style="font-size:.85rem;line-height:1.65">
+      <p style="background:rgba(200,160,60,.12);border:1px solid var(--border);border-radius:8px;padding:.7rem .9rem;font-size:.78rem;color:var(--text-muted);margin-bottom:1.2rem">⚠️ Platzhalter – muss vor dem finalen Deploy vervollständigt werden (Verantwortliche Person, Foto-Einwilligungsprozess).</p>
+
+      <p><strong>1. Verantwortlicher</strong><br>
+      [PLATZHALTER NAME]<br>
+      [PLATZHALTER ANSCHRIFT]<br>
+      E-Mail: [PLATZHALTER E-MAIL]</p>
+
+      <p style="margin-top:1rem"><strong>2. Welche Daten wir verarbeiten</strong></p>
+      <ul style="margin:.4rem 0 0 1.2rem;padding:0">
+        <li>Bei Login/Registrierung: E-Mail-Adresse, verschlüsseltes Passwort</li>
+        <li>Im Steckbrief: Name, Fotos, freiwillige Angaben (Motto, Facts)</li>
+        <li>In der Galerie: hochgeladene Fotos, Zeitpunkt des Uploads</li>
+        <li>Im Gästebuch: Name + Nachricht, die du selbst einträgst</li>
+        <li>Technisch beim Seitenaufruf: IP-Adresse (kurzzeitig, durch Hosting-Anbieter Netlify)</li>
+      </ul>
+
+      <p style="margin-top:1rem"><strong>3. Warum wir das verarbeiten</strong><br>
+      Um dir den Login zu deinem eigenen Steckbrief zu ermöglichen, damit du diesen bearbeiten und Fotos hochladen kannst, sowie um die Klassenkasse und das Gästebuch für alle sichtbar zu machen. Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) bei Fotos, sowie berechtigtes Interesse am Betrieb der Klassenseite (Art. 6 Abs. 1 lit. f DSGVO) bei Login und Gästebuch.</p>
+
+      <p style="margin-top:1rem"><strong>4. Fotos von dir und anderen</strong><br>
+      Fotos in der Galerie zeigen teils auch andere Personen. Diese werden nur veröffentlicht, wenn die abgebildete Person (bzw. bei Minderjährigen: deren Erziehungsberechtigte) vorab schriftlich eingewilligt hat. Du kannst diese Einwilligung jederzeit widerrufen – schreib dazu eine E-Mail an [PLATZHALTER E-MAIL], dann wird das Foto schnellstmöglich entfernt.</p>
+
+      <p style="margin-top:1rem"><strong>5. Wer die Daten sieht (Auftragsverarbeiter)</strong></p>
+      <ul style="margin:.4rem 0 0 1.2rem;padding:0">
+        <li><strong>Netlify, Inc.</strong> (USA) – Hosting der Website</li>
+        <li><strong>Supabase</strong> (Server-Standort: EU/Frankfurt) – Datenbank, Login-System, Speicherung von Fotos</li>
+      </ul>
+
+      <p style="margin-top:1rem"><strong>6. Speicherdauer</strong><br>
+      Deine Daten bleiben gespeichert, solange dein Account besteht bzw. bis du sie selbst löschst oder deine Löschung anfragst. Nach Ende des Abiturjahrgangs (voraussichtlich [PLATZHALTER ZEITRAUM]) wird die Seite offline genommen und alle Daten gelöscht.</p>
+
+      <p style="margin-top:1rem"><strong>7. Deine Rechte</strong><br>
+      Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie das Recht, eine erteilte Einwilligung jederzeit zu widerrufen. Wende dich dazu an [PLATZHALTER E-MAIL]. Außerdem hast du das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (für Sachsen-Anhalt: Landesbeauftragter für den Datenschutz Sachsen-Anhalt).</p>
+
+      <p style="margin-top:1rem"><strong>8. Cookies / lokale Speicherung</strong><br>
+      Diese Website speichert lediglich deine Hell/Dunkel-Modus-Einstellung lokal in deinem Browser (kein Tracking, keine Werbe-Cookies).</p>
+    </div>
+  </div>
+</div>
 
 <!-- MOTTOWOCHE MODAL -->
 <div class="modal-overlay" id="mottowocheModal">
