@@ -664,13 +664,16 @@ footer strong{color:var(--text)}
         <li><strong>Supabase</strong> (Server-Standort: EU/Frankfurt) – Datenbank, Login-System, Speicherung von Fotos</li>
       </ul>
 
-      <p style="margin-top:1rem"><strong>6. Speicherdauer</strong><br>
+      <p style="margin-top:1rem"><strong>6. Keine Weitergabe an Dritte</strong><br>
+      Deine Daten und Fotos werden ausschließlich für den Betrieb dieser Klassenseite genutzt und liegen ausschließlich in der oben genannten Datenbank (Supabase). Wir verkaufen oder vermieten deine Daten nicht, geben sie nicht an Werbetreibende weiter und nutzen sie zu keinem anderen Zweck als dem hier beschriebenen. Es gibt keine Analyse-Tools, kein Tracking und keine Cookies zu Werbezwecken auf dieser Seite.</p>
+
+      <p style="margin-top:1rem"><strong>7. Speicherdauer</strong><br>
       Deine Daten bleiben gespeichert, solange dein Account besteht bzw. bis du sie selbst löschst oder deine Löschung anfragst. Nach Ende des Abiturjahrgangs (voraussichtlich [PLATZHALTER ZEITRAUM]) wird die Seite offline genommen und alle Daten gelöscht.</p>
 
-      <p style="margin-top:1rem"><strong>7. Deine Rechte</strong><br>
+      <p style="margin-top:1rem"><strong>8. Deine Rechte</strong><br>
       Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie das Recht, eine erteilte Einwilligung jederzeit zu widerrufen. Wende dich dazu an [PLATZHALTER E-MAIL]. Außerdem hast du das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (für Sachsen-Anhalt: Landesbeauftragter für den Datenschutz Sachsen-Anhalt).</p>
 
-      <p style="margin-top:1rem"><strong>8. Cookies / lokale Speicherung</strong><br>
+      <p style="margin-top:1rem"><strong>9. Cookies / lokale Speicherung</strong><br>
       Diese Website speichert lediglich deine Hell/Dunkel-Modus-Einstellung lokal in deinem Browser (kein Tracking, keine Werbe-Cookies).</p>
     </div>
   </div>
@@ -1726,7 +1729,7 @@ function buildSchuelerEditForm(i){
       <input type="text" id="editMotto" value="${escAttr(d.motto)}" placeholder='&quot;Dein Motto&quot;'>
       <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
         <button type="button" class="btn btn-ghost btn-sm" onclick="generateSpruchVorschlag(true)">🎲 Alles mischen</button>
-        <button type="button" class="btn btn-ghost btn-sm" data-style="witzig" onclick="toggleSpruchStyle('witzig',this)">😏 Witzig</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-style="witzig" onclick="toggleSpruchStyle('witzig',this)">😂 Witzig</button>
         <button type="button" class="btn btn-ghost btn-sm" data-style="poetisch" onclick="toggleSpruchStyle('poetisch',this)">🌙 Poetisch</button>
         <button type="button" class="btn btn-ghost btn-sm" data-style="kurz" onclick="toggleSpruchStyle('kurz',this)">⚡ Kurz&amp;Knackig</button>
         <button type="button" class="btn btn-ghost btn-sm" data-style="slang" onclick="toggleSpruchStyle('slang',this)">😎 Lässig</button>
@@ -1741,7 +1744,7 @@ function buildSchuelerEditForm(i){
       <textarea id="editBio" rows="3">${escHtml(d.bio)}</textarea>
       <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
         <button type="button" class="btn btn-ghost btn-sm" onclick="generateBioVorschlag(true)">🎲 Alles mischen</button>
-        <button type="button" class="btn btn-ghost btn-sm" data-bio-style="witzig" onclick="toggleBioStyle('witzig',this)">😏 Witzig</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-bio-style="witzig" onclick="toggleBioStyle('witzig',this)">😂 Witzig</button>
         <button type="button" class="btn btn-ghost btn-sm" data-bio-style="poetisch" onclick="toggleBioStyle('poetisch',this)">🌙 Poetisch</button>
         <button type="button" class="btn btn-ghost btn-sm" data-bio-style="kurz" onclick="toggleBioStyle('kurz',this)">⚡ Kurz&amp;Knackig</button>
         <button type="button" class="btn btn-ghost btn-sm" data-bio-style="slang" onclick="toggleBioStyle('slang',this)">😎 Lässig</button>
