@@ -1636,8 +1636,80 @@ function resetSpruch(){
   activeSpruchStyles.clear();
   document.querySelectorAll('[data-style]').forEach(b=>b.classList.remove('active'));
 }
+const BIO_GENERAL_TEMPLATES=[
+  v=>`${v.name} ist bekannt für ${v.f1} und ${v.f2} – und genau das macht die Mischung aus.`,
+  v=>`${v.name} bringt ${v.f1} und ${v.f2} unter einen Hut, meistens erfolgreich.`,
+  v=>`"${v.m1}" – das würde ${v.name} wahrscheinlich unterschreiben.`,
+  v=>`${v.name}: ${v.f1}, ${v.f2} und ${v.f3} – alles gleichzeitig, warum auch nicht.`,
+];
+const BIO_STYLE_TEMPLATES={
+  witzig:[
+    v=>`${v.name} lebt nach dem Motto: ${v.f1} und dabei bloß nicht nachdenken.`,
+    v=>`Offizielle Statistik: ${v.name} macht ${v.f1} öfter als alle anderen zusammen.`,
+    v=>`${v.name} + ${v.f1} = Chaos mit Ansage.`,
+    v=>`Wer ${v.name} sucht, findet meistens jemanden, der gerade ${v.f1}.`,
+  ],
+  poetisch:[
+    v=>`${v.name} findet in ${v.f1} mehr als nur ein Hobby – eher ein kleines Zuhause.`,
+    v=>`Zwischen ${v.f1} und ${v.f2} liegt ${v.name}s ganze Geschichte.`,
+    v=>`${v.name} bewegt sich leise durch ${v.f1}, aber hinterlässt Spuren.`,
+    v=>`In ${v.f1} steckt mehr von ${v.name}, als man auf den ersten Blick sieht.`,
+  ],
+  kurz:[
+    v=>`${v.name}: ${v.f1}. Mehr braucht's nicht.`,
+    v=>`${v.f1}. Das ist ${v.name} in einem Wort.`,
+    v=>`${v.name} kurz erklärt: ${v.f1}, ${v.f2}.`,
+    v=>`${v.f1} – Punkt. Das ist ${v.name}.`,
+  ],
+  slang:[
+    v=>`${v.name} und ${v.f1} – passt einfach.`,
+    v=>`Ganz entspannt: ${v.name} macht ${v.f1} und gut is.`,
+    v=>`${v.name} zieht ${v.f1} einfach durch, kein Stress.`,
+    v=>`Läuft bei ${v.name}: ${v.f1}, ${v.f2}.`,
+  ],
+};
+let activeBioStyles=new Set();
+function toggleBioStyle(style,btn){
+  if(activeBioStyles.has(style)){activeBioStyles.delete(style);btn.classList.remove('active');}
+  else{activeBioStyles.add(style);btn.classList.add('active');}
+  generateBioVorschlag();
+}
+function generateBioVorschlag(clearStyles){
+  if(clearStyles){
+    activeBioStyles.clear();
+    document.querySelectorAll('[data-bio-style]').forEach(b=>b.classList.remove('active'));
+  }
+  const{mottoFragmente,factFragmente}=collectSpruchFragmente();
+  if(factFragmente.length<2&&mottoFragmente.length<1){
+    showToast('Noch nicht genug Mottos/Facts von anderen da – später nochmal versuchen');
+    return;
+  }
+  const pool=activeBioStyles.size>0
+    ?[...activeBioStyles].flatMap(s=>BIO_STYLE_TEMPLATES[s])
+    :BIO_GENERAL_TEMPLATES;
+  const shuffledFacts=[...factFragmente].sort(()=>Math.random()-.5);
+  const shuffledMottos=[...mottoFragmente].sort(()=>Math.random()-.5);
+  const firstName=(editDraft&&editDraft.name?editDraft.name:'Er/Sie').split(' ')[0];
+  const vars={
+    name:firstName,
+    f1:shuffledFacts[0]||'einzigartig sein',
+    f2:shuffledFacts[1]||'einfach er/sie selbst sein',
+    f3:shuffledFacts[2]||'niemals aufgeben',
+    m1:shuffledMottos[0]||'Alles ist möglich',
+  };
+  const input=document.getElementById('editBio');
+  if(input.dataset.original===undefined)input.dataset.original=input.value;
+  input.value=pickRandom(pool)(vars);
+}
+function resetBio(){
+  const input=document.getElementById('editBio');
+  if(input.dataset.original!==undefined){input.value=input.dataset.original;delete input.dataset.original;}
+  activeBioStyles.clear();
+  document.querySelectorAll('[data-bio-style]').forEach(b=>b.classList.remove('active'));
+}
 function buildSchuelerEditForm(i){
   activeSpruchStyles.clear();
+  activeBioStyles.clear();
   const s=SCHUELER[i],d=editDraft;
   const inits=(s.name||'').split(' ').map(n=>n[0]).join('').substring(0,2);
   const avatarPreview=d.profilBild
@@ -1666,7 +1738,19 @@ function buildSchuelerEditForm(i){
     </div>
     <div class="form-field"><label>Sportart (mit Emoji)</label><input type="text" id="editSport" value="${escAttr(d.sport)}" placeholder="🏃 Sportart"></div>
     <div class="form-field"><label>Farbe</label><input type="color" id="editFarbe" value="${d.farbe}" style="height:44px;padding:.2rem;cursor:pointer"></div>
-    <div class="form-field"><label>Über mich</label><textarea id="editBio" rows="3">${escHtml(d.bio)}</textarea></div>
+    <div class="form-field">
+      <label>Über mich</label>
+      <textarea id="editBio" rows="3">${escHtml(d.bio)}</textarea>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="generateBioVorschlag(true)">🎲 Alles mischen</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-bio-style="witzig" onclick="toggleBioStyle('witzig',this)">😏 Witzig</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-bio-style="poetisch" onclick="toggleBioStyle('poetisch',this)">🌙 Poetisch</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-bio-style="kurz" onclick="toggleBioStyle('kurz',this)">⚡ Kurz&amp;Knackig</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-bio-style="slang" onclick="toggleBioStyle('slang',this)">😎 Lässig</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="resetBio()">↺ Zurücksetzen</button>
+      </div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:.4rem">Stilrichtung(en) antippen (auch mehrere gleichzeitig) oder "Alles mischen" für Zufall. Vorschlag ist nur ein Startpunkt – frei editierbar.</div>
+    </div>
     <div class="form-field"><label>Facts (mit Komma trennen, max. 6)</label><input type="text" id="editFacts" value="${escAttr(d.facts.join(', '))}" placeholder="🎹 Klavier, 🎧 DJ, 😴 Langschläfer"></div>
     <div class="sm-images">
       <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 1</label><input type="file" accept="image/*" id="editImg1Input"></div><input type="text" id="editImg1Label" value="${escAttr(d.sportImg1Label==='Bild 1'?'':d.sportImg1Label)}" placeholder="Bildunterschrift (z.B. 'Beim Training')" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
