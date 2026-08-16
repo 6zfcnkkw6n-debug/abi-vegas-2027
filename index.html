@@ -1859,13 +1859,15 @@ function buildKarteSlot(idx,skipClick){
   el.dataset.rarity=k.rarity;
   el.innerHTML=`<div class="karte-inner">
       <div class="karte-face karte-back"><div class="karte-back-mark">🂠</div></div>
-      <div class="karte-face karte-front" style="--rarity-glow:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 14%,transparent)"><div class="karte-rarity-badge" style="background:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 55%,transparent)">${RARITY_LABELS[k.rarity]}</div><div class="karte-emoji">${k.emoji}</div><div class="karte-name">${k.name}</div><div class="karte-fach">${k.fach}</div></div>
+      <div class="karte-face karte-front" style="--rarity-glow:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 14%,transparent)"><button class="karte-zoom-btn" aria-label="Vergrößern" style="position:absolute;top:.4rem;right:.4rem;background:rgba(0,0,0,.35);border:none;border-radius:50%;width:1.8rem;height:1.8rem;font-size:.85rem;cursor:pointer">🔍</button><div class="karte-rarity-badge" style="background:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 55%,transparent)">${RARITY_LABELS[k.rarity]}</div><div class="karte-emoji">${k.emoji}</div><div class="karte-name">${k.name}</div><div class="karte-fach">${k.fach}</div></div>
     </div>`;
   if(!skipClick){
     el.addEventListener('click',()=>{
-      if(revealedKarten.has(idx)){openKarteModal(idx);}
-      else{revealedKarten.add(idx);el.classList.add('flipped');updateKartenProgress();showToast(k.name+' aufgedeckt ✓');}
+      if(!revealedKarten.has(idx)){revealedKarten.add(idx);updateKartenProgress();showToast(k.name+' aufgedeckt ✓');}
+      el.classList.toggle('flipped');
     });
+    const zoomBtn=el.querySelector('.karte-zoom-btn');
+    if(zoomBtn)zoomBtn.addEventListener('click',(e)=>{e.stopPropagation();openKarteModal(idx);});
   }
   return el;
 }
