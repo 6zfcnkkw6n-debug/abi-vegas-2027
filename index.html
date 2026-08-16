@@ -731,9 +731,21 @@ footer strong{color:var(--text)}
 
       <div id="accountSetNewPw" style="display:none">
         <p id="newPwHint" style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.4">Neues Passwort für deinen Account festlegen.</p>
-        <div class="form-field"><label>Neues Passwort</label><input type="password" id="newPwInput" placeholder="mind. 6 Zeichen" onkeydown="if(event.key==='Enter')submitNewPassword()"></div>
+        <div class="form-field"><label>Neues Passwort</label>
+          <div style="display:flex;gap:.5rem">
+            <input type="password" id="newPwInput" placeholder="mind. 6 Zeichen" style="flex:1" onkeydown="if(event.key==='Enter')document.getElementById('newPwConfirmInput').focus()">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="togglePwVisibility('newPwInput',this)" style="white-space:nowrap">👁️ anzeigen</button>
+          </div>
+        </div>
+        <div class="form-field"><label>Passwort bestätigen</label>
+          <div style="display:flex;gap:.5rem">
+            <input type="password" id="newPwConfirmInput" placeholder="Passwort wiederholen" style="flex:1" onkeydown="if(event.key==='Enter')submitNewPassword()">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="togglePwVisibility('newPwConfirmInput',this)" style="white-space:nowrap">👁️ anzeigen</button>
+          </div>
+        </div>
         <button class="btn btn-primary" id="newPwSubmitBtn" onclick="submitNewPassword()" style="width:100%;justify-content:center">✓ Passwort speichern</button>
       </div>
+
 
       <div id="accountLoggedIn" style="display:none">
         <p style="font-size:.9rem;color:var(--text-muted);margin-bottom:.3rem">Eingeloggt als</p>
@@ -1098,9 +1110,17 @@ async function submitForgotPassword(){
     setAuthTab('login');
   }finally{btn.disabled=false;btn.textContent='Link senden';}
 }
+function togglePwVisibility(inputId,btn){
+  const input=document.getElementById(inputId);
+  const isHidden=input.type==='password';
+  input.type=isHidden?'text':'password';
+  btn.textContent=isHidden?'🙈 verbergen':'👁️ anzeigen';
+}
 async function submitNewPassword(){
   const pw=document.getElementById('newPwInput').value;
+  const pwConfirm=document.getElementById('newPwConfirmInput').value;
   if(pw.length<6){showToast('❌ Mind. 6 Zeichen');return;}
+  if(pw!==pwConfirm){showToast('❌ Passwörter stimmen nicht überein');return;}
   const btn=document.getElementById('newPwSubmitBtn');btn.disabled=true;btn.textContent='Speichert...';
   try{
     const{error}=await sb.auth.updateUser({password:pw});
@@ -1595,8 +1615,8 @@ function buildSchuelerEditForm(i){
     <div class="form-field"><label>Über mich</label><textarea id="editBio" rows="3">${escHtml(d.bio)}</textarea></div>
     <div class="form-field"><label>Facts (mit Komma trennen, max. 6)</label><input type="text" id="editFacts" value="${escAttr(d.facts.join(', '))}" placeholder="🎹 Klavier, 🎧 DJ, 😴 Langschläfer"></div>
     <div class="sm-images">
-      <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 1</label><input type="file" accept="image/*" id="editImg1Input"></div><input type="text" id="editImg1Label" value="${escAttr(d.sportImg1Label)}" placeholder="Bildunterschrift" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
-      <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 2</label><input type="file" accept="image/*" id="editImg2Input"></div><input type="text" id="editImg2Label" value="${escAttr(d.sportImg2Label)}" placeholder="Bildunterschrift" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
+      <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 1</label><input type="file" accept="image/*" id="editImg1Input"></div><input type="text" id="editImg1Label" value="${escAttr(d.sportImg1Label==='Bild 1'?'':d.sportImg1Label)}" placeholder="Bildunterschrift (z.B. 'Beim Training')" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
+      <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 2</label><input type="file" accept="image/*" id="editImg2Input"></div><input type="text" id="editImg2Label" value="${escAttr(d.sportImg2Label==='Bild 2'?'':d.sportImg2Label)}" placeholder="Bildunterschrift (z.B. 'Nach dem Wettkampf')" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
     </div>
     <div style="display:flex;gap:.6rem;margin-top:1.2rem">
       <button class="btn btn-primary" id="saveSteckbriefBtn" style="flex:1;justify-content:center" onclick="saveSteckbrief(${i})">✓ Speichern</button>
