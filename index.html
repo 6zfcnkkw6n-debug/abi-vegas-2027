@@ -1564,13 +1564,60 @@ const SPRUCH_TEMPLATES=[
   v=>`${v.f1}, ${v.f2} und ${v.f3} – das bin ich in drei Worten.`,
   v=>`Zwischen "${v.m1}" und ${v.f1} irgendwo dazwischen.`,
 ];
+const STYLE_TEMPLATES={
+  witzig:[
+    v=>`${v.f1} und ${v.f2} – mehr Persönlichkeit passt gar nicht rein.`,
+    v=>`Offiziell zertifiziert: ${v.f1}. Inoffiziell: chaotisch, aber liebenswert.`,
+    v=>`Warnung: kann ${v.f1} auslösen.`,
+    v=>`${v.f1}? Passiert. ${v.f2}? Auch. Sorry, nicht sorry.`,
+    v=>`Talent trifft Chaos: ${v.f1} und ${v.f2}.`,
+    v=>`"${v.m1}" – klingt cool, ist aber auch einfach wahr.`,
+  ],
+  poetisch:[
+    v=>`Zwischen ${v.f1} und ${v.f2} liegt mein ganzes Ich.`,
+    v=>`"${v.m1}" – ein Satz, viele Wege.`,
+    v=>`Manche suchen den Sinn, ich hab ihn in ${v.f1} gefunden.`,
+    v=>`Still, aber echt: ${v.f1}.`,
+    v=>`${v.f1} ist nicht, was ich tue – es ist, wer ich bin.`,
+    v=>`In jedem ${v.f1} steckt ein kleines Stück Zukunft.`,
+  ],
+  kurz:[
+    v=>`${v.f1}. Punkt.`,
+    v=>`${v.f1}. Immer.`,
+    v=>`Einfach: ${v.f1}.`,
+    v=>`"${v.m1}"`,
+    v=>`${v.f1} > alles.`,
+    v=>`Kurz gesagt: ${v.f1}.`,
+  ],
+  slang:[
+    v=>`${v.f1}, ${v.f2} – passt scho.`,
+    v=>`Ganz entspannt: ${v.f1}.`,
+    v=>`${v.f1} und gut is.`,
+    v=>`Läuft bei mir: ${v.f1}.`,
+    v=>`Kein Stress, einfach ${v.f1}.`,
+    v=>`"${v.m1}" – locker bleiben, Rest kommt von allein.`,
+  ],
+};
+let activeSpruchStyles=new Set();
+function toggleSpruchStyle(style,btn){
+  if(activeSpruchStyles.has(style)){activeSpruchStyles.delete(style);btn.classList.remove('active');}
+  else{activeSpruchStyles.add(style);btn.classList.add('active');}
+  generateSpruchVorschlag();
+}
 function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
-function generateSpruchVorschlag(){
+function generateSpruchVorschlag(clearStyles){
+  if(clearStyles){
+    activeSpruchStyles.clear();
+    document.querySelectorAll('[data-style]').forEach(b=>b.classList.remove('active'));
+  }
   const{mottoFragmente,factFragmente}=collectSpruchFragmente();
   if(factFragmente.length<2&&mottoFragmente.length<1){
     showToast('Noch nicht genug Mottos/Facts von anderen da – später nochmal versuchen');
     return;
   }
+  const pool=activeSpruchStyles.size>0
+    ?[...activeSpruchStyles].flatMap(s=>STYLE_TEMPLATES[s])
+    :SPRUCH_TEMPLATES;
   const shuffledFacts=[...factFragmente].sort(()=>Math.random()-.5);
   const shuffledMottos=[...mottoFragmente].sort(()=>Math.random()-.5);
   const vars={
@@ -1581,13 +1628,16 @@ function generateSpruchVorschlag(){
   };
   const input=document.getElementById('editMotto');
   if(input.dataset.original===undefined)input.dataset.original=input.value;
-  input.value=pickRandom(SPRUCH_TEMPLATES)(vars);
+  input.value=pickRandom(pool)(vars);
 }
 function resetSpruch(){
   const input=document.getElementById('editMotto');
   if(input.dataset.original!==undefined){input.value=input.dataset.original;delete input.dataset.original;}
+  activeSpruchStyles.clear();
+  document.querySelectorAll('[data-style]').forEach(b=>b.classList.remove('active'));
 }
 function buildSchuelerEditForm(i){
+  activeSpruchStyles.clear();
   const s=SCHUELER[i],d=editDraft;
   const inits=(s.name||'').split(' ').map(n=>n[0]).join('').substring(0,2);
   const avatarPreview=d.profilBild
@@ -1604,11 +1654,15 @@ function buildSchuelerEditForm(i){
     <div class="form-field">
       <label>Motto</label>
       <input type="text" id="editMotto" value="${escAttr(d.motto)}" placeholder='&quot;Dein Motto&quot;'>
-      <div style="display:flex;gap:.5rem;margin-top:.5rem">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="generateSpruchVorschlag()">🎲 Spruch-Idee</button>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="generateSpruchVorschlag(true)">🎲 Alles mischen</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-style="witzig" onclick="toggleSpruchStyle('witzig',this)">😏 Witzig</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-style="poetisch" onclick="toggleSpruchStyle('poetisch',this)">🌙 Poetisch</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-style="kurz" onclick="toggleSpruchStyle('kurz',this)">⚡ Kurz&amp;Knackig</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-style="slang" onclick="toggleSpruchStyle('slang',this)">😎 Lässig</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="resetSpruch()">↺ Zurücksetzen</button>
       </div>
-      <div style="font-size:.72rem;color:var(--text-muted);margin-top:.4rem">Mixt echte Mottos &amp; Facts der Klasse zu Vorschlägen – so oft klicken wie du willst, danach frei editierbar.</div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:.4rem">Stilrichtung(en) antippen (auch mehrere gleichzeitig möglich) oder "Alles mischen" für Zufall aus allen Stilen. Mixt echte Mottos &amp; Facts der Klasse – so oft klicken wie du willst, danach frei editierbar.</div>
     </div>
     <div class="form-field"><label>Sportart (mit Emoji)</label><input type="text" id="editSport" value="${escAttr(d.sport)}" placeholder="🏃 Sportart"></div>
     <div class="form-field"><label>Farbe</label><input type="color" id="editFarbe" value="${d.farbe}" style="height:44px;padding:.2rem;cursor:pointer"></div>
