@@ -389,6 +389,11 @@ footer strong{color:var(--text)}
   </div>
 </nav>
 
+<div id="a2hsBanner" style="display:none;position:sticky;top:0;z-index:150;background:var(--bg-card);border-bottom:1px solid var(--border);padding:.55rem 1rem;font-size:.78rem;color:var(--text-muted);text-align:center">
+  📲 Für Benachrichtigungen: Teilen-Symbol → <strong>"Zum Home-Bildschirm"</strong> → Seite von dort öffnen
+  <button onclick="dismissA2hsBanner()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;margin-left:.6rem;vertical-align:middle">✕</button>
+</div>
+
 <div class="modal-overlay" id="mottoReminderModal">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
@@ -798,6 +803,7 @@ footer strong{color:var(--text)}
           </div>
           <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitChangePassword()">✓ Speichern</button>
         </div>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-bottom:.6rem" id="pushToggleBtn" onclick="togglePushNotifications()">🔔 Benachrichtigungen aktivieren</button>
         <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="doLogout()">Abmelden</button>
       </div>
 
@@ -1256,6 +1262,7 @@ async function refreshAuthUI(){
   }
   renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
   if(document.getElementById('aktionenEntries'))renderAktionen();
+  updatePushToggleUI();
 }
 function goToMySteckbrief(){
   closeModal('accountModal');
@@ -2388,6 +2395,66 @@ async function deleteAktion(id){
   showToast('✓ Gelöscht');
 }
 
+// ── PUSH NOTIFICATIONS ──
+const VAPID_PUBLIC_KEY='BBxn3g-ONXG0jcgZfA1akdL84JzbjwpJffKumagIrk5UOcktRTaRw4IxewwsiZg_6hncwbz01N-Dgy01vK0eQo8';
+let swRegistration=null;
+function urlBase64ToUint8Array(base64String){
+  const padding='='.repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const rawData=atob(base64);
+  return Uint8Array.from([...rawData].map(c=>c.charCodeAt(0)));
+}
+async function registerServiceWorker(){
+  if(!('serviceWorker' in navigator))return;
+  try{swRegistration=await navigator.serviceWorker.register('/sw.js');}
+  catch(e){console.warn('SW-Registrierung fehlgeschlagen:',e);}
+}
+async function getPushSubscription(){
+  if(!swRegistration)return null;
+  return await swRegistration.pushManager.getSubscription();
+}
+async function updatePushToggleUI(){
+  const btn=document.getElementById('pushToggleBtn');
+  if(!btn)return;
+  if(!('PushManager' in window)||!swRegistration){
+    btn.textContent='🔔 Nicht unterstützt in diesem Browser';
+    return;
+  }
+  const sub=await getPushSubscription();
+  btn.textContent=sub?'🔕 Benachrichtigungen ausschalten':'🔔 Benachrichtigungen aktivieren';
+}
+async function togglePushNotifications(){
+  if(!currentUser){showToast('❌ Dafür musst du eingeloggt sein');return;}
+  if(!('PushManager' in window)){showToast('❌ Dein Browser unterstützt keine Push-Benachrichtigungen (auf iPhone: erst zum Home-Bildschirm hinzufügen)');return;}
+  if(!swRegistration){showToast('❌ Noch nicht bereit, versuch es gleich nochmal');return;}
+  const existing=await getPushSubscription();
+  if(existing){
+    await sb.from('push_subscriptions').delete().eq('endpoint',existing.endpoint);
+    await existing.unsubscribe();
+    showToast('🔕 Benachrichtigungen ausgeschaltet');
+  }else{
+    const permission=await Notification.requestPermission();
+    if(permission!=='granted'){showToast('❌ Berechtigung nicht erteilt');return;}
+    const sub=await swRegistration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)});
+    const subJson=sub.toJSON();
+    const{error}=await sb.from('push_subscriptions').insert({user_id:currentUser.id,endpoint:subJson.endpoint,p256dh:subJson.keys.p256dh,auth:subJson.keys.auth});
+    if(error){showToast('❌ Konnte nicht gespeichert werden: '+error.message);return;}
+    showToast('🔔 Benachrichtigungen aktiviert');
+  }
+  updatePushToggleUI();
+}
+function checkA2hsBanner(){
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  const isStandalone=window.navigator.standalone||window.matchMedia('(display-mode: standalone)').matches;
+  if(isIOS&&!isStandalone&&!localStorage.getItem('a2hsDismissed')){
+    document.getElementById('a2hsBanner').style.display='block';
+  }
+}
+function dismissA2hsBanner(){
+  document.getElementById('a2hsBanner').style.display='none';
+  localStorage.setItem('a2hsDismissed','1');
+}
+
 // ── COUNTDOWN ──
 function updateCountdowns(){
   document.querySelectorAll('.countdown-card').forEach(card=>{
@@ -2550,6 +2617,8 @@ window.addEventListener('scroll',()=>{
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded',()=>{
+  registerServiceWorker().finally(()=>updatePushToggleUI());
+  checkA2hsBanner();
   const savedTheme=localStorage.getItem('theme');
   const wantDark=savedTheme?savedTheme==='dark':(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
   if(wantDark){
