@@ -537,10 +537,9 @@ footer strong{color:var(--text)}
 <section id="sammelkarten">
   <p class="section-label reveal">Prototyp · In Planung</p>
   <h2 class="section-title reveal">Lehrer-Sammelkarten</h2>
-  <p class="section-desc reveal">Bald: 1.000 Packs mit je 5 Karten unserer Lehrer. Deckt Karten einzeln auf oder öffnet ein ganzes Pack – Kooperation & Design noch nicht final. 🎴</p>
+  <p class="section-desc reveal">Übersicht, welche Karten unserer Lehrer es später geben wird – Kooperation & Design noch nicht final. Tippe eine Karte an zum Aufdecken, nochmal antippen zum Reinzoomen. 🎴</p>
   <div class="karten-toolbar reveal">
     <div class="karten-legend" id="kartenLegend"></div>
-    <button class="btn btn-primary btn-sm" onclick="openPack()">🎁 Pack öffnen (5 Karten)</button>
   </div>
   <div class="karten-progress reveal"><div class="karten-progress-bar-wrap"><div class="karten-progress-bar" id="kartenProgressBar"></div></div><span id="kartenProgressLabel"></span></div>
   <div class="karten-grid" id="kartenGrid"></div>
@@ -756,7 +755,18 @@ footer strong{color:var(--text)}
         <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:.6rem" onclick="goToMySteckbrief()">✏️ Meinen Steckbrief bearbeiten</button>
         <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-bottom:.6rem" onclick="toggleChangePw()">🔑 Passwort ändern</button>
         <div id="changePwPanel" style="display:none;margin-bottom:.6rem">
-          <div class="form-field"><label>Neues Passwort</label><input type="password" id="changePwInput" placeholder="mind. 6 Zeichen" onkeydown="if(event.key==='Enter')submitChangePassword()"></div>
+          <div class="form-field"><label>Neues Passwort</label>
+            <div style="display:flex;gap:.5rem">
+              <input type="password" id="changePwInput" placeholder="mind. 6 Zeichen" style="flex:1" onkeydown="if(event.key==='Enter')document.getElementById('changePwConfirmInput').focus()">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="togglePwVisibility('changePwInput',this)" style="white-space:nowrap">👁️ anzeigen</button>
+            </div>
+          </div>
+          <div class="form-field"><label>Passwort bestätigen</label>
+            <div style="display:flex;gap:.5rem">
+              <input type="password" id="changePwConfirmInput" placeholder="Passwort wiederholen" style="flex:1" onkeydown="if(event.key==='Enter')submitChangePassword()">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="togglePwVisibility('changePwConfirmInput',this)" style="white-space:nowrap">👁️ anzeigen</button>
+            </div>
+          </div>
           <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitChangePassword()">✓ Speichern</button>
         </div>
         <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="doLogout()">Abmelden</button>
@@ -796,16 +806,8 @@ footer strong{color:var(--text)}
 <!-- SAMMELKARTE DETAIL MODAL -->
 <div class="modal-overlay" id="karteModal">
   <div class="modal" style="max-width:400px">
-    <div class="modal-header"><div class="modal-title">🎴 Sammelkarte</div><div class="modal-sub">Prototyp – Platzhalter</div><button class="modal-close" onclick="closeModal('karteModal')">✕</button></div>
+    <div class="modal-header"><div class="modal-title">🎴 Sammelkarte</div><div class="modal-sub">Antippen oder wischen zum Umdrehen</div><button class="modal-close" onclick="closeModal('karteModal')">✕</button></div>
     <div class="modal-body" id="karteBody"></div>
-  </div>
-</div>
-
-<!-- PACK-OPENING MODAL -->
-<div class="modal-overlay" id="packModal">
-  <div class="modal" style="max-width:560px">
-    <div class="modal-header"><div class="modal-title">🎁 Pack geöffnet!</div><div class="modal-sub">5 neue Karten</div><button class="modal-close" onclick="closeModal('packModal')">✕</button></div>
-    <div class="modal-body"><div class="karten-grid" id="packGrid" style="grid-template-columns:repeat(auto-fill,minmax(100px,1fr))"></div></div>
   </div>
 </div>
 
@@ -1138,11 +1140,14 @@ function toggleChangePw(){
 }
 async function submitChangePassword(){
   const pw=document.getElementById('changePwInput').value;
+  const pwConfirm=document.getElementById('changePwConfirmInput').value;
   if(pw.length<6){showToast('❌ Mind. 6 Zeichen');return;}
+  if(pw!==pwConfirm){showToast('❌ Passwörter stimmen nicht überein');return;}
   const{error}=await sb.auth.updateUser({password:pw});
   if(error){showToast('❌ '+error.message);return;}
   showToast('✓ Passwort geändert');
   document.getElementById('changePwInput').value='';
+  document.getElementById('changePwConfirmInput').value='';
   document.getElementById('changePwPanel').style.display='none';
 }
 function submitAuth(){
@@ -1888,34 +1893,41 @@ function getKarteNumber(idx){
 function openKarteModal(i){
   const k=LEHRERKARTEN[i];
   const total=RARITY_TOTALS[k.rarity];
-  document.getElementById('karteBody').innerHTML=`<div style="text-align:center;padding:.5rem 0">
-    <div style="font-size:3.5rem;margin-bottom:.5rem">${k.emoji}</div>
-    <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:600">${k.name}</div>
-    <div style="color:var(--accent);font-weight:500;margin:.3rem 0 1rem">${k.fach}</div>
-    <span style="display:inline-block;padding:.3rem .9rem;border-radius:20px;font-size:.75rem;font-weight:700;color:#fff;background:${RARITY_COLORS[k.rarity]}">${RARITY_LABELS[k.rarity]}</span>
-    <div style="font-size:.72rem;color:var(--text-muted);margin-top:.7rem">Karte ${getKarteNumber(i)} / ${total}</div>
-    <p style="font-size:.82rem;color:var(--text-muted);margin-top:1.2rem;font-style:italic">Kartendesign & echte Daten folgen, sobald die Kooperation steht.</p>
-  </div>`;
+  document.getElementById('karteBody').innerHTML=`
+    <div class="karte-slot flipped" id="karteModalFlip" style="width:220px;margin:0 auto 1rem">
+      <div class="karte-inner">
+        <div class="karte-face karte-back">
+          <div style="padding:.8rem;text-align:center">
+            <div style="font-size:.72rem;color:rgba(255,255,255,.7);margin-bottom:.5rem">Karte ${getKarteNumber(i)} / ${total}</div>
+            <p style="font-size:.85rem;color:rgba(255,255,255,.9);line-height:1.5">Kartendesign &amp; echte Daten folgen, sobald die Kooperation mit den Lehrern steht.</p>
+          </div>
+        </div>
+        <div class="karte-face karte-front" style="--rarity-glow:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 14%,transparent)">
+          <div class="karte-rarity-badge" style="background:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 55%,transparent)">${RARITY_LABELS[k.rarity]}</div>
+          <div class="karte-emoji" style="font-size:3rem">${k.emoji}</div>
+          <div class="karte-name" style="font-size:1.1rem">${k.name}</div>
+          <div class="karte-fach">${k.fach}</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:.75rem;color:var(--text-muted)">👆 Antippen oder wischen zum Umdrehen</div>
+  `;
   openModal('karteModal');
+  setupKarteModalFlip();
 }
-function openPack(){
-  const picks=[];
-  for(let i=0;i<5;i++){picks.push(Math.floor(Math.random()*LEHRERKARTEN.length));}
-  const grid=document.getElementById('packGrid');grid.innerHTML='';
-  const slots=[];
-  picks.forEach(idx=>{
-    const slot=buildKarteSlot(idx,true);
-    grid.appendChild(slot);
-    slots.push({slot,idx});
-  });
-  openModal('packModal');
-  slots.forEach((item,n)=>{
-    setTimeout(()=>{
-      item.slot.classList.add('flipped','pack-glow');
-      revealedKarten.add(item.idx);
-    },400+n*350);
-  });
-  setTimeout(()=>{updateKartenProgress();renderKartenGrid();showToast('Pack geöffnet! 🎉');},400+slots.length*350+300);
+function setupKarteModalFlip(){
+  const el=document.getElementById('karteModalFlip');
+  if(!el)return;
+  el.style.cursor='pointer';
+  el.addEventListener('click',()=>el.classList.toggle('flipped'));
+  let startX=null;
+  el.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;},{passive:true});
+  el.addEventListener('touchend',e=>{
+    if(startX===null)return;
+    const dx=e.changedTouches[0].clientX-startX;
+    if(Math.abs(dx)>30)el.classList.toggle('flipped');
+    startX=null;
+  },{passive:true});
 }
 
 // ── SLOT MACHINE (Easter Egg) ──
