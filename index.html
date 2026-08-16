@@ -835,6 +835,7 @@ footer strong{color:var(--text)}
     <div class="gallery-lb-title" id="galleryLbTitle">Kategorie</div>
     <div class="gallery-lb-controls">
       <label class="gallery-lb-btn" id="galleryUploadBtn" style="display:none;cursor:pointer">＋ Foto hinzufügen<input type="file" accept="image/*" style="display:none" onchange="uploadGaleriePhoto(event)"></label>
+      <button class="gallery-lb-btn" id="galleryDeleteBtn" style="display:none" onclick="deleteGaleriePhoto()">🗑️ Löschen</button>
       <button class="gallery-lb-btn" id="slideshowBtn" onclick="toggleSlideshow()">▶ Diashow</button>
       <button class="gallery-lb-close" onclick="closeGalleryLightbox()">✕</button>
     </div>
@@ -2115,7 +2116,7 @@ async function loadGalerieFromDb(){
   GALERIE_KATEGORIEN.forEach(kat=>{kat.photos=[];});
   (data||[]).forEach(f=>{
     const kat=GALERIE_KATEGORIEN.find(k=>k.label===f.kategorie);
-    if(kat)kat.photos.push({src:f.src_url,caption:f.caption||''});
+    if(kat)kat.photos.push({id:f.id,src:f.src_url,caption:f.caption||''});
   });
 }
 async function uploadGaleriePhoto(e){
@@ -2232,6 +2233,9 @@ function renderGalleryLb(){
   const wrap=document.getElementById('galleryLbImgWrap');wrap.innerHTML='';
   const uploadBtn=document.getElementById('galleryUploadBtn');
   if(uploadBtn)uploadBtn.style.display=currentUser?'inline-flex':'none';
+  const deleteBtn=document.getElementById('galleryDeleteBtn');
+  const isAdmin=currentUser&&currentUser.email==='juliusulrich@t-online.de';
+  if(deleteBtn)deleteBtn.style.display=(isAdmin&&!isFiller)?'inline-flex':'none';
   document.getElementById('slideshowBtn').style.display=list.length>1?'inline-flex':'none';
   const photo=list[galleryCurrentIdx]||list[0];
   if(photo.src){const img=document.createElement('img');img.src=photo.src;img.alt=photo.caption||'';wrap.appendChild(img);}
@@ -2247,6 +2251,23 @@ function renderGalleryLb(){
     thumbRow.appendChild(thumb);
     if(i===galleryCurrentIdx)setTimeout(()=>thumb.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}),50);
   });
+}
+async function deleteGaleriePhoto(){
+  const kat=GALERIE_KATEGORIEN[galleryCurrentKat];
+  const photo=kat.photos[galleryCurrentIdx];
+  if(!photo||!photo.id){showToast('❌ Kein löschbares Foto ausgewählt');return;}
+  if(!confirm('Dieses Foto wirklich löschen?'))return;
+  const{error:dbErr}=await sb.from('galerie_fotos').delete().eq('id',photo.id);
+  if(dbErr){showToast('❌ '+dbErr.message);return;}
+  try{
+    const path=new URL(photo.src).pathname.split('/gallery-photos/')[1];
+    if(path)await sb.storage.from('gallery-photos').remove([path]);
+  }catch(e){console.warn('Storage-Datei konnte nicht entfernt werden:',e);}
+  await loadGalerieFromDb();
+  initGalerie();
+  if(kat.photos.length){galleryCurrentIdx=Math.min(galleryCurrentIdx,kat.photos.length-1);renderGalleryLb();}
+  else{closeGalleryLightbox();}
+  showToast('✓ Foto gelöscht');
 }
 function toggleSlideshow(){
   if(slideshowTimer){stopSlideshow();}
