@@ -841,7 +841,10 @@ const SUPABASE_KEY='sb_publishable_b_zsRCB3eW2a6ByB4GAe5A_cPOd15jc';
 // WICHTIG: Supabase loescht/verarbeitet den URL-Hash beim Client-Init automatisch.
 // Invite-Links (type=invite) loesen dabei NUR 'SIGNED_IN' aus, kein 'PASSWORD_RECOVERY' -
 // ohne diesen Check wuerde die Person still eingeloggt, ohne je ein Passwort gesetzt zu haben.
+console.log('[DEBUG] RAW hash:', window.location.hash, '| RAW search:', window.location.search);
 let __isInviteLink=/type=invite/.test(window.location.hash)||/type=invite/.test(window.location.search);
+console.log('[DEBUG] __isInviteLink computed as:', __isInviteLink);
+let __invitePasswordFormActive=false; // true solange das Passwort-Formular offen sein soll, blockiert refreshAuthUI vom Überschreiben
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 // ✏️ MOTTOWOCHE
@@ -1103,6 +1106,7 @@ async function submitNewPassword(){
     const{error}=await sb.auth.updateUser({password:pw});
     if(error){showToast('❌ '+error.message);return;}
     showToast('✓ Neues Passwort gesetzt');
+    __invitePasswordFormActive=false;
     document.getElementById('accountSetNewPw').style.display='none';
     refreshAuthUI();
   }finally{btn.disabled=false;btn.textContent='✓ Passwort speichern';}
@@ -1161,6 +1165,7 @@ async function doLogout(){
   closeModal('accountModal');
 }
 async function refreshAuthUI(){
+  if(__invitePasswordFormActive){console.log('[DEBUG] refreshAuthUI blockiert - Passwort-Formular ist aktiv');return;}
   const{data}=await sb.auth.getSession();
   currentUser=data&&data.session?data.session.user:null;
   const btn=document.getElementById('accountBtn');
@@ -1188,9 +1193,11 @@ function goToMySteckbrief(){
   openSteckbriefFullscreen(i);
 }
 sb.auth.onAuthStateChange((event,_session)=>{
+  console.log('[DEBUG] onAuthStateChange fired. event=', event, '__isInviteLink=', __isInviteLink);
   const wasInvite=event==='SIGNED_IN'&&__isInviteLink;
   if(event==='PASSWORD_RECOVERY'||wasInvite){
     __isInviteLink=false; // nur beim ersten Login nach dem Invite-Klick erzwingen
+    __invitePasswordFormActive=true; // sperrt refreshAuthUI, bis Passwort gespeichert ist
     document.getElementById('accountLoggedOut').style.display='none';
     document.getElementById('accountLoggedIn').style.display='none';
     document.getElementById('accountForgotPw').style.display='none';
