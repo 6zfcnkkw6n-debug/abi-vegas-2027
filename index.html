@@ -565,6 +565,14 @@ footer strong{color:var(--text)}
   <p class="section-label reveal">Erinnerungen</p>
   <h2 class="section-title reveal">Foto-Galerie</h2>
   <p class="section-desc reveal">Momente, die bleiben. Klicke auf eine Kategorie für die Fotos.</p>
+  <div class="admin-panel reveal" style="display:none;margin-bottom:1rem;padding:.8rem;border:1px dashed var(--border);border-radius:8px">
+    <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.5rem">🛠️ Admin: Kategorie hinzufügen</div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <input type="text" id="newKatEmoji" placeholder="📷" maxlength="4" style="width:60px;padding:.5rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:16px">
+      <input type="text" id="newKatLabel" placeholder="Name der Kategorie" style="flex:1;min-width:160px;padding:.5rem .7rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:16px">
+      <button class="btn btn-primary btn-sm" onclick="addGalerieKategorie()">+ Hinzufügen</button>
+    </div>
+  </div>
   <div class="galerie-grid" id="galerieGrid"></div>
 </section>
 <hr class="sep">
@@ -943,7 +951,7 @@ const RARITY_COLORS={common:'#9AA3A0',rare:'#4A90D9',epic:'#9B4AD9',legendary:'#
 const RARITY_LABELS={common:'Common',rare:'Rare',epic:'Epic',legendary:'Legendary',mythic:'Mythic'};
 
 // ✏️ GALERIE
-const GALERIE_KATEGORIEN=[
+let GALERIE_KATEGORIEN=[
   {label:'Klassenfahrt 2025', emoji:'✈️', color:'#5B7FA6', photos:[], fillerCaptions:['Anreise','Ausflug Tag 1','Gruppenphoto','Abend am Lagerfeuer']},
   {label:'Sportfeste', emoji:'🏆', color:'#A66B3A', photos:[], fillerCaptions:['Staffellauf','Mannschaftsfoto','Siegerehrung']},
   {label:'Weihnachtsfeier', emoji:'🎄', color:'#5B9E6B', photos:[], fillerCaptions:['Klassenfeier','Wichteln','Gruppenfoto']},
@@ -951,6 +959,22 @@ const GALERIE_KATEGORIEN=[
   {label:'Kuchenbasar', emoji:'🎂', color:'#5B9EA0', photos:[], fillerCaptions:['Aufbau','Verkauf','Erlös zählen']},
   {label:'Abi Vegas Feier', emoji:'🎰', color:'#8B7355', photos:[], fillerCaptions:['Bald...','Bald...']},
 ];
+const GALERIE_FILLER_BY_LABEL={
+  'Klassenfahrt 2025':['Anreise','Ausflug Tag 1','Gruppenphoto','Abend am Lagerfeuer'],
+  'Sportfeste':['Staffellauf','Mannschaftsfoto','Siegerehrung'],
+  'Weihnachtsfeier':['Klassenfeier','Wichteln','Gruppenfoto'],
+  'Projektwoche':['Projekt Tag 1','Präsentation','Ergebnis'],
+  'Kuchenbasar':['Aufbau','Verkauf','Erlös zählen'],
+  'Abi Vegas Feier':['Bald...','Bald...'],
+};
+async function loadGalerieKategorienFromDb(){
+  const{data,error}=await sb.from('galerie_kategorien').select('*').order('sort_order');
+  if(error||!data||!data.length){console.warn('Galerie-Kategorien laden fehlgeschlagen, nutze Fallback:',error);return;}
+  GALERIE_KATEGORIEN=data.map(row=>({
+    id:row.id,label:row.label,emoji:row.emoji,color:row.color,photos:[],
+    fillerCaptions:GALERIE_FILLER_BY_LABEL[row.label]||['Fotos folgen bald...'],
+  }));
+}
 
 // ── STATE ──
 let kasseValue=1240; const KASSE_GOAL=4000;
@@ -2135,8 +2159,54 @@ function initGalerie(){
     thumbWrap.appendChild(badge);
     const info=document.createElement('div');info.className='galerie-cat-info';
     info.innerHTML=`<div class="galerie-cat-label">${kat.emoji} ${kat.label}</div><div class="galerie-cat-count">${kat.photos.length} Fotos · Klicken zum Öffnen</div>`;
+    const adminRow=document.createElement('div');adminRow.className='admin-panel';adminRow.style.cssText='display:none;margin-top:.5rem';
+    const renameBtn=document.createElement('button');renameBtn.className='btn btn-ghost btn-sm';renameBtn.style.marginRight='.4rem';renameBtn.textContent='✏️ Umbenennen';
+    renameBtn.onclick=(e)=>{e.stopPropagation();renameGalerieKategorie(ki);};
+    const delBtn=document.createElement('button');delBtn.className='btn btn-ghost btn-sm';delBtn.textContent='🗑️ Löschen';
+    delBtn.onclick=(e)=>{e.stopPropagation();deleteGalerieKategorie(ki);};
+    adminRow.appendChild(renameBtn);adminRow.appendChild(delBtn);
+    info.appendChild(adminRow);
     cat.appendChild(thumbWrap);cat.appendChild(info);grid.appendChild(cat);
   });
+}
+async function addGalerieKategorie(){
+  const label=document.getElementById('newKatLabel').value.trim();
+  const emoji=document.getElementById('newKatEmoji').value.trim()||'📷';
+  if(!label){showToast('❌ Bitte einen Namen eingeben');return;}
+  const colors=['#5B7FA6','#A66B3A','#5B9E6B','#9E5B7A','#5B9EA0','#8B7355','#7A5B9E','#A6503A'];
+  const color=colors[GALERIE_KATEGORIEN.length%colors.length];
+  const{error}=await sb.from('galerie_kategorien').insert({label,emoji,color,sort_order:GALERIE_KATEGORIEN.length});
+  if(error){showToast('❌ '+error.message);return;}
+  document.getElementById('newKatLabel').value='';document.getElementById('newKatEmoji').value='';
+  await loadGalerieKategorienFromDb();
+  await loadGalerieFromDb();
+  initGalerie();
+  showToast('✓ Kategorie hinzugefügt');
+}
+async function renameGalerieKategorie(ki){
+  const kat=GALERIE_KATEGORIEN[ki];
+  const neu=prompt('Neuer Name für "'+kat.label+'":',kat.label);
+  if(!neu||!neu.trim()||neu.trim()===kat.label)return;
+  const neuTrim=neu.trim();
+  const{error:e1}=await sb.from('galerie_kategorien').update({label:neuTrim}).eq('id',kat.id);
+  if(e1){showToast('❌ '+e1.message);return;}
+  const{error:e2}=await sb.from('galerie_fotos').update({kategorie:neuTrim}).eq('kategorie',kat.label);
+  if(e2){showToast('⚠️ Name geändert, aber Fotos konnten nicht umgehängt werden: '+e2.message);}
+  await loadGalerieKategorienFromDb();
+  await loadGalerieFromDb();
+  initGalerie();
+  showToast('✓ Umbenannt');
+}
+async function deleteGalerieKategorie(ki){
+  const kat=GALERIE_KATEGORIEN[ki];
+  if(kat.photos.length>0){showToast('❌ Kategorie hat noch Fotos - erst Fotos entfernen');return;}
+  if(!confirm('"'+kat.label+'" wirklich löschen?'))return;
+  const{error}=await sb.from('galerie_kategorien').delete().eq('id',kat.id);
+  if(error){showToast('❌ '+error.message);return;}
+  await loadGalerieKategorienFromDb();
+  await loadGalerieFromDb();
+  initGalerie();
+  showToast('✓ Gelöscht');
 }
 let galleryCurrentKat=0,galleryCurrentIdx=0,slideshowTimer=null;
 function openGalleryLightbox(ki){
@@ -2392,10 +2462,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.documentElement.classList.add('dark');
     document.getElementById('themeBtn').textContent='☀️';
   }
-  Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb(),loadGalerieFromDb()]).finally(()=>{
-    initSchueler();initSammelkarten();initGalerie();renderGb();updateKasseUI();drawGluecksrad();
-    refreshAuthUI();
-    setTimeout(()=>{document.getElementById('kasseBar').style.width=Math.min(100,Math.round(kasseValue/KASSE_GOAL*100))+'%';},800);
+  loadGalerieKategorienFromDb().finally(()=>{
+    Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb(),loadGalerieFromDb()]).finally(()=>{
+      initSchueler();initSammelkarten();initGalerie();renderGb();updateKasseUI();drawGluecksrad();
+      refreshAuthUI();
+      setTimeout(()=>{document.getElementById('kasseBar').style.width=Math.min(100,Math.round(kasseValue/KASSE_GOAL*100))+'%';},800);
+    });
   });
   updateCountdowns();
   setInterval(()=>{
