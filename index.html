@@ -374,6 +374,7 @@ footer strong{color:var(--text)}
   <a class="nav-logo" href="#hero" id="navLogo" onmousedown="startLogoHold(event)" ontouchstart="startLogoHold(event)" onmouseup="endLogoHold()" onmouseleave="endLogoHold()" ontouchend="endLogoHold()" ontouchcancel="endLogoHold()" onclick="handleLogoClick(event)"><span style="opacity:.5">♠</span>Abi <span>2027</span></a>
   <ul class="nav-links">
     <li><a href="#countdown">Countdown</a></li><li><a href="#abikasse">Abikasse</a></li>
+    <li><a href="#aktionen">Aktionen</a></li>
     <li><a href="#schueler">Klasse</a></li><li><a href="#sammelkarten">Sammelkarten</a></li>
     <li><a href="#galerie">Galerie</a></li><li><a href="#gaestebuch">Gästebuch</a></li>
     <li><a href="#spiele">Spiele</a></li>
@@ -429,6 +430,7 @@ footer strong{color:var(--text)}
   <div class="mobile-suit">♠ ♥ ♦ ♣</div>
   <a href="#countdown" onclick="closeMobileMenu()">Countdown</a>
   <a href="#abikasse" onclick="closeMobileMenu()">Abikasse</a>
+  <a href="#aktionen" onclick="closeMobileMenu()">Aktionen</a>
   <a href="#schueler" onclick="closeMobileMenu()">Klasse</a>
   <a href="#sammelkarten" onclick="closeMobileMenu()">Sammelkarten</a>
   <a href="#galerie" onclick="closeMobileMenu()">Galerie</a>
@@ -516,6 +518,25 @@ footer strong{color:var(--text)}
     <div style="font-size:3rem">🎰</div>
     <div class="donation-left"><h3>All in für unsere Abi-Feier</h3><p>Jeder Chip zählt! Helft uns, damit unsere Abi Vegas Feier unvergesslich wird. 🙏</p></div>
     <div style="text-align:center"><a class="btn-donation" href="https://www.gofundme.com/f/qjd9j-geld-fur-unseren-abiball?attribution_id=sl:9650c0bb-725f-4303-b501-50215c63a18a&lang=de_DE&ts=1769188968&utm_campaign=man_sharesheet_dash&utm_medium=customer&utm_source=whatsapp&utm_content=link_in_bio&fbclid=PAdGRleAQlThJleHRuA2FlbQIxMQBzcnRjBmFwcF9pZA8xMjQwMjQ1NzQyODc0MTQAAaeocrKK97Uy8XtOzAQJxoabxo12xbufKyIh52nb1wdgoeuwh84EYpKw-seSGg_aem_-fv59H3lwT9EWlFwfgk1Cg" target="_blank">💛 Jetzt spenden</a></div>
+  </div>
+</section>
+<hr class="sep">
+
+<section id="aktionen">
+  <p class="section-label reveal">Was steht an</p>
+  <h2 class="section-title reveal">Aktionen</h2>
+  <p class="section-desc reveal">Kuchenbasar, Grillbasar, Disco & Co. – alle eingeloggten können Termine eintragen. Läuft ein Termin ab, verschwindet er automatisch.</p>
+  <div class="gaestebuch-layout">
+    <div class="gaestebuch-entries" id="aktionenEntries"></div>
+    <div class="gb-form reveal" id="aktionenFormWrap" style="display:none">
+      <h3>Termin eintragen</h3>
+      <div class="form-field"><label>Emoji</label><input type="text" id="aktionEmoji" placeholder="🎂" maxlength="4"></div>
+      <div class="form-field"><label>Titel</label><input type="text" id="aktionTitel" placeholder="z.B. Kuchenbasar"></div>
+      <div class="form-field"><label>Datum</label><input type="date" id="aktionDatum"></div>
+      <div class="form-field"><label>Kurzbeschreibung (optional)</label><textarea id="aktionBeschreibung" rows="2" placeholder="z.B. Geld nicht vergessen 😉"></textarea></div>
+      <button class="btn btn-primary" onclick="addAktion()" style="width:100%;justify-content:center">+ Eintragen</button>
+    </div>
+    <div class="gb-form reveal" id="aktionenLoginHint" style="text-align:center;color:var(--text-muted);font-size:.85rem">Zum Eintragen musst du eingeloggt sein.</div>
   </div>
 </section>
 <hr class="sep">
@@ -1234,6 +1255,7 @@ async function refreshAuthUI(){
     setAuthTab('login');
   }
   renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
+  if(document.getElementById('aktionenEntries'))renderAktionen();
 }
 function goToMySteckbrief(){
   closeModal('accountModal');
@@ -2316,6 +2338,57 @@ async function addGbEntry(){
   showToast('Eintrag hinzugefügt ✓');
 }
 
+// ── AKTIONEN ──
+let aktionenList=[];
+async function loadAktionenFromDb(){
+  const today=new Date().toISOString().slice(0,10);
+  if(currentUser){await sb.from('aktionen').delete().lt('datum',today);}
+  const{data,error}=await sb.from('aktionen').select('*').order('datum',{ascending:true});
+  if(error){console.warn('Aktionen-Laden fehlgeschlagen:',error);return;}
+  aktionenList=(data||[]).filter(a=>a.datum>=today);
+}
+function renderAktionen(){
+  const c=document.getElementById('aktionenEntries');c.innerHTML='';
+  const formWrap=document.getElementById('aktionenFormWrap'),loginHint=document.getElementById('aktionenLoginHint');
+  if(formWrap)formWrap.style.display=currentUser?'block':'none';
+  if(loginHint)loginHint.style.display=currentUser?'none':'block';
+  if(!aktionenList.length){
+    c.innerHTML='<p style="text-align:center;color:var(--text-muted);font-size:.9rem;padding:1rem 0">Aktuell nichts geplant 📭</p>';
+    return;
+  }
+  aktionenList.forEach(a=>{
+    const ds=new Date(a.datum+'T00:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'long'});
+    const el=document.createElement('div');el.className='gb-entry';
+    const delBtn=currentUser?`<button class="gb-delete-btn" title="Löschen" onclick="deleteAktion('${a.id}')">🗑</button>`:'';
+    el.innerHTML=`<div class="gb-header"><span class="gb-name">${a.emoji||'🎉'} ${a.titel}</span><span class="gb-date">${ds}</span>${delBtn}</div>${a.beschreibung?`<div class="gb-text">${a.beschreibung}</div>`:''}`;
+    c.appendChild(el);
+  });
+}
+async function addAktion(){
+  if(!currentUser){showToast('❌ Dafür musst du eingeloggt sein');return;}
+  const emoji=document.getElementById('aktionEmoji').value.trim()||'🎉';
+  const titel=document.getElementById('aktionTitel').value.trim();
+  const datum=document.getElementById('aktionDatum').value;
+  const beschreibung=document.getElementById('aktionBeschreibung').value.trim();
+  if(!titel||!datum){showToast('⚠️ Bitte Titel und Datum eingeben');return;}
+  const{data,error}=await sb.from('aktionen').insert({emoji,titel,datum,beschreibung,created_by:currentUser.id}).select().single();
+  if(error){showToast('❌ '+error.message);return;}
+  aktionenList.push(data);
+  aktionenList.sort((a,b)=>a.datum.localeCompare(b.datum));
+  renderAktionen();
+  document.getElementById('aktionEmoji').value='';document.getElementById('aktionTitel').value='';
+  document.getElementById('aktionDatum').value='';document.getElementById('aktionBeschreibung').value='';
+  showToast('✓ Termin eingetragen');
+}
+async function deleteAktion(id){
+  if(!confirm('Diesen Termin wirklich löschen?'))return;
+  const{error}=await sb.from('aktionen').delete().eq('id',id);
+  if(error){showToast('❌ '+error.message);return;}
+  aktionenList=aktionenList.filter(a=>a.id!==id);
+  renderAktionen();
+  showToast('✓ Gelöscht');
+}
+
 // ── COUNTDOWN ──
 function updateCountdowns(){
   document.querySelectorAll('.countdown-card').forEach(card=>{
@@ -2486,8 +2559,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('themeBtn').textContent='☀️';
   }
   loadGalerieKategorienFromDb().finally(()=>{
-    Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb(),loadGalerieFromDb()]).finally(()=>{
-      initSchueler();initSammelkarten();initGalerie();renderGb();updateKasseUI();drawGluecksrad();
+    Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb(),loadGalerieFromDb(),loadAktionenFromDb()]).finally(()=>{
+      initSchueler();initSammelkarten();initGalerie();renderGb();renderAktionen();updateKasseUI();drawGluecksrad();
       refreshAuthUI();
       setTimeout(()=>{document.getElementById('kasseBar').style.width=Math.min(100,Math.round(kasseValue/KASSE_GOAL*100))+'%';},800);
     });
