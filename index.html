@@ -2342,7 +2342,6 @@ async function addGbEntry(){
 let aktionenList=[];
 async function loadAktionenFromDb(){
   const today=new Date().toISOString().slice(0,10);
-  if(currentUser){await sb.from('aktionen').delete().lt('datum',today);}
   const{data,error}=await sb.from('aktionen').select('*').order('datum',{ascending:true});
   if(error){console.warn('Aktionen-Laden fehlgeschlagen:',error);return;}
   aktionenList=(data||[]).filter(a=>a.datum>=today);
