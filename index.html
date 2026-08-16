@@ -1855,7 +1855,7 @@ function imgViewerNav(dir){
 function buildKarteSlot(idx,skipClick){
   const k=LEHRERKARTEN[idx];
   const el=document.createElement('div');
-  el.className='karte-slot reveal'+(revealedKarten.has(idx)?' flipped':'');
+  el.className='karte-slot'+(revealedKarten.has(idx)?' flipped':'');
   el.dataset.rarity=k.rarity;
   el.innerHTML=`<div class="karte-inner">
       <div class="karte-face karte-back"><div class="karte-back-mark">🂠</div></div>
@@ -2151,7 +2151,7 @@ function updateGalerieBadges(){
 function initGalerie(){
   const grid=document.getElementById('galerieGrid');
   GALERIE_KATEGORIEN.forEach((kat,ki)=>{
-    const cat=document.createElement('div');cat.className='galerie-cat reveal';cat.onclick=()=>openGalleryLightbox(ki);
+    const cat=document.createElement('div');cat.className='galerie-cat';cat.onclick=()=>openGalleryLightbox(ki);
     const thumbWrap=document.createElement('div');thumbWrap.className='galerie-cat-thumb';
     const cv=document.createElement('canvas');cv.width=400;cv.height=300;thumbWrap.appendChild(cv);
     setTimeout(()=>drawThumb(cv,kat.color,kat.emoji,kat.label),50+ki*20);
