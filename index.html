@@ -929,12 +929,10 @@ let SCHUELER=[
 const LEHRERKARTEN=[
   {name:'Lehrer Platzhalter',fach:'Sport',emoji:'🏃',rarity:'common'},
   {name:'Lehrer Platzhalter',fach:'Mathematik',emoji:'🔢',rarity:'common'},
-  {name:'Lehrer Platzhalter',fach:'Deutsch',emoji:'📖',rarity:'common'},
+  {name:'Lehrer Platzhalter',fach:'Deutsch',emoji:'📖',rarity:'rare'},
   {name:'Lehrer Platzhalter',fach:'Chemie',emoji:'⚗️',rarity:'rare'},
-  {name:'Lehrer Platzhalter',fach:'Englisch',emoji:'🌍',rarity:'rare'},
-  {name:'Lehrer Platzhalter',fach:'Physik',emoji:'⚡',rarity:'epic'},
   {name:'Schulleitung',fach:'Direktion',emoji:'👑',rarity:'legendary'},
-  {name:'???',fach:'???',emoji:'🃏',rarity:'mythic'},
+  {name:'…',fach:'Folgt noch',emoji:'✨',rarity:'common',comingSoon:true},
 ];
 const RARITY_COLORS={common:'#9AA3A0',rare:'#4A90D9',epic:'#9B4AD9',legendary:'#C8A84B',mythic:'#E04040'};
 const RARITY_LABELS={common:'Common',rare:'Rare',epic:'Epic',legendary:'Legendary',mythic:'Mythic'};
@@ -1829,7 +1827,7 @@ function buildKarteSlot(idx,skipClick){
   el.dataset.rarity=k.rarity;
   el.innerHTML=`<div class="karte-inner">
       <div class="karte-face karte-back"><div class="karte-back-mark">🂠</div></div>
-      <div class="karte-face karte-front" style="--rarity-glow:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 38%,transparent)"><div class="karte-rarity-badge" style="background:${RARITY_COLORS[k.rarity]}">${RARITY_LABELS[k.rarity]}</div><div class="karte-emoji">${k.emoji}</div><div class="karte-name">${k.name}</div><div class="karte-fach">${k.fach}</div></div>
+      <div class="karte-face karte-front" style="--rarity-glow:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 14%,transparent)"><div class="karte-rarity-badge" style="background:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 55%,transparent)">${RARITY_LABELS[k.rarity]}</div><div class="karte-emoji">${k.emoji}</div><div class="karte-name">${k.name}</div><div class="karte-fach">${k.fach}</div></div>
     </div>`;
   if(!skipClick){
     el.addEventListener('click',()=>{
@@ -2041,7 +2039,7 @@ function drawThumb(canvas,color,emoji,label){
   for(let i=0;i<600;i++){ctx.fillStyle=`rgba(255,255,255,${Math.random()*.05})`;ctx.fillRect(Math.random()*w,Math.random()*h,2,2);}
   ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
   for(let i=-h;i<w+h;i+=24){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+h,h);ctx.stroke();}
-  // Polaroid-Icon statt Emoji: kleines Foto-Symbol mit Mini-Landschaft, leicht verkippt (verspielter, wie hingeworfen)
+  // Polaroid mit echtem Kategorie-Emoji statt generischer Landschaft - jede Kategorie sieht anders aus
   let seed=0;for(let i=0;i<label.length;i++)seed+=label.charCodeAt(i);
   const tilt=((seed%7)-3)*.035; // ~ -6° bis +6°, stabil pro Label statt jedes Mal neu zufaellig
   ctx.save();
@@ -2055,15 +2053,9 @@ function drawThumb(canvas,color,emoji,label){
   const ig=ctx.createLinearGradient(ix,iy,ix,iy+ih);
   ig.addColorStop(0,shadeColor(color,35));ig.addColorStop(1,color);
   ctx.fillStyle=ig;ctx.fillRect(ix,iy,iw,ih);
-  ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=Math.max(1,iw*.025);ctx.lineJoin='round';
-  ctx.beginPath();ctx.arc(ix+iw*.24,iy+ih*.3,iw*.09,0,Math.PI*2);ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(ix,iy+ih*.88);
-  ctx.lineTo(ix+iw*.32,iy+ih*.48);
-  ctx.lineTo(ix+iw*.5,iy+ih*.66);
-  ctx.lineTo(ix+iw*.72,iy+ih*.36);
-  ctx.lineTo(ix+iw,iy+ih*.82);
-  ctx.stroke();
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font=`${Math.round(ih*.55)}px sans-serif`;
+  ctx.fillText(emoji,ix+iw/2,iy+ih*.52);
   // kleines Klebeband-Eck oben, schraeg - Scrapbook-Feeling
   ctx.save();
   ctx.translate(px+pw*.5,py-ph*.03);ctx.rotate(-.5);
@@ -2073,7 +2065,7 @@ function drawThumb(canvas,color,emoji,label){
   ctx.restore();
   const fade=ctx.createLinearGradient(0,h*.55,0,h);fade.addColorStop(0,'rgba(0,0,0,0)');fade.addColorStop(1,'rgba(0,0,0,.55)');
   ctx.fillStyle=fade;ctx.fillRect(0,0,w,h);
-  ctx.textAlign='center';
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';
   ctx.font=`600 ${Math.round(h*.08)}px Outfit,sans-serif`;ctx.fillStyle='rgba(255,255,255,.95)';ctx.fillText(label,w/2,h*.9);
 }
 async function loadGalerieFromDb(){
