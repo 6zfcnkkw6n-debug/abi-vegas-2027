@@ -261,6 +261,16 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 /* GÄSTEBUCH */
 .gaestebuch-layout{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start}
 .gaestebuch-entries{display:flex;flex-direction:column;gap:1rem}
+.wheel-picker{height:176px;overflow-y:auto;scroll-snap-type:y mandatory;position:relative;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.wheel-picker::-webkit-scrollbar{display:none}
+.wheel-picker-item{height:44px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;font-size:1.05rem;color:var(--text-muted);font-variant-numeric:tabular-nums;transition:color .15s,font-size .15s,font-weight .15s}
+.wheel-picker-item.selected{color:var(--text);font-weight:700;font-size:1.25rem}
+.wheel-picker-highlight{position:absolute;top:50%;left:0;right:0;height:44px;transform:translateY(-50%);border-top:1px solid var(--border);border-bottom:1px solid var(--border);pointer-events:none}
+.wheel-row{display:flex;gap:.6rem}
+.wheel-col{flex:1;position:relative}
+.wheel-col-label{text-align:center;font-size:.68rem;color:var(--text-muted);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.05em}
+.reminder-row{display:flex;align-items:center;gap:.6rem;padding:.6rem 0;border-bottom:1px solid var(--border)}
+.reminder-row:last-child{border-bottom:none}
 .gb-entry{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;box-shadow:var(--shadow);transition:background-color .4s ease,border-color .4s ease}
 #aktionenEntries .gb-entry{padding:1.9rem 1.8rem}
 #aktionenEntries .gb-name{font-size:1.25rem}
@@ -541,9 +551,32 @@ footer strong{color:var(--text)}
       <h3>Termin eintragen</h3>
       <div class="form-field"><label>Emoji</label><input type="text" id="aktionEmoji" placeholder="🎂" maxlength="4"></div>
       <div class="form-field"><label>Titel</label><input type="text" id="aktionTitel" placeholder="z.B. Kuchenbasar"></div>
-      <div class="form-field"><label>Datum</label><input type="date" id="aktionDatum"></div>
+      <div class="form-field"><label>Datum</label>
+        <div class="wheel-row">
+          <div class="wheel-col"><div class="wheel-col-label">Tag</div><div class="wheel-picker" id="wheelDay"></div></div>
+          <div class="wheel-col"><div class="wheel-col-label">Monat</div><div class="wheel-picker" id="wheelMonth"></div></div>
+          <div class="wheel-col"><div class="wheel-col-label">Jahr</div><div class="wheel-picker" id="wheelYear"></div></div>
+        </div>
+      </div>
       <div class="form-field"><label>Kurzbeschreibung (optional)</label><textarea id="aktionBeschreibung" rows="2" placeholder="z.B. Geld nicht vergessen 😉"></textarea></div>
       <div class="form-field"><label>Bild (optional)</label><input type="file" accept="image/*" id="aktionBild"></div>
+      <div class="form-field"><label>Erinnerungen (optional)</label>
+        <div class="reminder-row">
+          <input type="checkbox" id="reminderWeekOn" onchange="toggleReminderWheel('week')">
+          <span style="flex:1;font-size:.88rem">1 Woche vorher</span>
+        </div>
+        <div class="wheel-col" id="reminderWeekWheelWrap" style="display:none;margin:.4rem 0"><div class="wheel-col-label">Uhrzeit</div><div class="wheel-picker" id="wheelHourWeek"></div></div>
+        <div class="reminder-row">
+          <input type="checkbox" id="reminder2dOn" onchange="toggleReminderWheel('2d')">
+          <span style="flex:1;font-size:.88rem">2 Tage vorher</span>
+        </div>
+        <div class="wheel-col" id="reminder2dWheelWrap" style="display:none;margin:.4rem 0"><div class="wheel-col-label">Uhrzeit</div><div class="wheel-picker" id="wheelHour2d"></div></div>
+        <div class="reminder-row">
+          <input type="checkbox" id="reminder1dOn" onchange="toggleReminderWheel('1d')">
+          <span style="flex:1;font-size:.88rem">1 Tag vorher</span>
+        </div>
+        <div class="wheel-col" id="reminder1dWheelWrap" style="display:none;margin:.4rem 0"><div class="wheel-col-label">Uhrzeit</div><div class="wheel-picker" id="wheelHour1d"></div></div>
+      </div>
       <button class="btn btn-primary" onclick="addAktion()" style="width:100%;justify-content:center">+ Eintragen</button>
     </div>
   </div>
@@ -1604,8 +1637,9 @@ async function saveSteckbrief(i){
   editDraft.sport=document.getElementById('editSport').value.trim();
   editDraft.farbe=document.getElementById('editFarbe').value;
   editDraft.bio=document.getElementById('editBio').value.trim();
-  editDraft.sportImg1Label=document.getElementById('editImg1Label').value.trim()||'Bild 1';
-  editDraft.sportImg2Label=document.getElementById('editImg2Label').value.trim()||'Bild 2';
+  const img1LabelEl=document.getElementById('editImg1Label'),img2LabelEl=document.getElementById('editImg2Label');
+  editDraft.sportImg1Label=img1LabelEl?(img1LabelEl.value.trim()||'Bild 1'):editDraft.sportImg1Label;
+  editDraft.sportImg2Label=img2LabelEl?(img2LabelEl.value.trim()||'Bild 2'):editDraft.sportImg2Label;
   const s=SCHUELER[i];
   const btn=document.getElementById('saveSteckbriefBtn');
   if(btn){btn.disabled=true;btn.textContent='Speichert...';}
@@ -1838,18 +1872,44 @@ function buildSchuelerEditForm(i){
       <div style="font-size:.72rem;color:var(--text-muted);margin-top:.4rem">Stilrichtung(en) antippen (auch mehrere gleichzeitig) oder "Alles mischen" für Zufall. Vorschlag ist nur ein Startpunkt – frei editierbar.</div>
     </div>
     <div class="form-field"><label>Facts (mit Komma trennen, max. 6)</label><input type="text" id="editFacts" value="${escAttr(d.facts.join(', '))}" placeholder="🎹 Klavier, 🎧 DJ, 😴 Langschläfer"></div>
-    <div class="sm-images">
-      <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 1</label><input type="file" accept="image/*" id="editImg1Input">${d.sportImg1?'<button type="button" class="btn btn-ghost btn-sm" style="margin-top:.4rem" onclick="removeSportImg(\'sportImg1\')">🗑️ Entfernen</button>':''}</div><input type="text" id="editImg1Label" value="${escAttr(d.sportImg1Label==='Bild 1'?'':d.sportImg1Label)}" placeholder="Bildunterschrift (z.B. 'Beim Training')" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
-      <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 2</label><input type="file" accept="image/*" id="editImg2Input">${d.sportImg2?'<button type="button" class="btn btn-ghost btn-sm" style="margin-top:.4rem" onclick="removeSportImg(\'sportImg2\')">🗑️ Entfernen</button>':''}</div><input type="text" id="editImg2Label" value="${escAttr(d.sportImg2Label==='Bild 2'?'':d.sportImg2Label)}" placeholder="Bildunterschrift (z.B. 'Nach dem Wettkampf')" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
-    </div>
+    <div class="sm-images" id="editImagesContainer"></div>
     <div style="display:flex;gap:.6rem;margin-top:1.2rem">
       <button class="btn btn-primary" id="saveSteckbriefBtn" style="flex:1;justify-content:center" onclick="saveSteckbrief(${i})">✓ Speichern</button>
       <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="cancelEditMode()">Abbrechen</button>
     </div>`;
   wrap.querySelector('#editProfilBildInput').onchange=e=>handleImageUpload(e,'profilBild',i);
-  wrap.querySelector('#editImg1Input').onchange=e=>handleImageUpload(e,'sportImg1',i);
-  wrap.querySelector('#editImg2Input').onchange=e=>handleImageUpload(e,'sportImg2',i);
+  renderEditImageSlots(wrap,d,i);
   return wrap;
+}
+function renderEditImageSlots(wrap,d,i){
+  const container=wrap.querySelector('#editImagesContainer');
+  if(!container)return;
+  let html='';
+  ['sportImg1','sportImg2'].forEach((field,idx)=>{
+    const labelField=field+'Label';
+    if(d[field]){
+      html+=`<div>
+        <div style="position:relative;border-radius:10px;overflow:hidden;aspect-ratio:4/3;background:var(--bg)">
+          <img src="${d[field]}" style="width:100%;height:100%;object-fit:cover;display:block">
+          <button type="button" onclick="removeSportImg('${field}')" style="position:absolute;top:.4rem;right:.4rem;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:1.8rem;height:1.8rem;cursor:pointer">🗑️</button>
+        </div>
+        <input type="text" id="editImg${idx+1}Label" value="${escAttr(d[labelField]==='Bild '+(idx+1)?'':d[labelField])}" placeholder="Bildunterschrift" style="width:100%;margin-top:.4rem;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)">
+      </div>`;
+    }
+  });
+  const filledCount=['sportImg1','sportImg2'].filter(f=>d[f]).length;
+  if(filledCount<2){
+    html+=`<div style="display:flex;align-items:center;justify-content:center;border:2px dashed var(--border);border-radius:10px;aspect-ratio:4/3">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('editImgAddInput').click()">+ Bild hinzufügen</button>
+      <input type="file" accept="image/*" id="editImgAddInput" style="display:none">
+    </div>`;
+  }
+  container.innerHTML=html;
+  const addInput=container.querySelector('#editImgAddInput');
+  if(addInput){
+    const nextField=d.sportImg1?'sportImg2':'sportImg1';
+    addInput.onchange=e=>handleImageUpload(e,nextField,i);
+  }
 }
 function buildSchuelerDetail(i){
   const s=SCHUELER[i];
@@ -2323,6 +2383,72 @@ async function addGbEntry(){
   showToast('Eintrag hinzugefügt ✓');
 }
 
+// ── WHEEL PICKER (Apple-Style Scroll-Auswahl) ──
+const WHEEL_ITEM_H=44;
+function createWheelPicker(container,items,initialIndex,onChange){
+  container.innerHTML='';
+  const pad=(176-WHEEL_ITEM_H)/2;
+  const topPad=document.createElement('div');topPad.style.height=pad+'px';
+  const botPad=document.createElement('div');botPad.style.height=pad+'px';
+  container.appendChild(topPad);
+  items.forEach((it,idx)=>{
+    const el=document.createElement('div');el.className='wheel-picker-item';el.textContent=it.label;el.dataset.idx=idx;
+    container.appendChild(el);
+  });
+  container.appendChild(botPad);
+  const highlight=document.createElement('div');highlight.className='wheel-picker-highlight';
+  container.appendChild(highlight);
+  let ticking=false;
+  function updateSelection(){
+    const idx=Math.max(0,Math.min(items.length-1,Math.round(container.scrollTop/WHEEL_ITEM_H)));
+    container.querySelectorAll('.wheel-picker-item').forEach(el=>el.classList.toggle('selected',parseInt(el.dataset.idx)===idx));
+    if(onChange)onChange(items[idx].value,idx);
+  }
+  container.addEventListener('scroll',()=>{
+    if(ticking)return;ticking=true;
+    requestAnimationFrame(()=>{updateSelection();ticking=false;});
+  },{passive:true});
+  container.scrollTop=initialIndex*WHEEL_ITEM_H;
+  requestAnimationFrame(updateSelection);
+}
+let aktionDateSel={day:1,month:1,year:2026};
+function daysInMonth(month,year){return new Date(year,month,0).getDate();}
+function initAktionDateWheels(){
+  const today=new Date();
+  aktionDateSel={day:today.getDate(),month:today.getMonth()+1,year:today.getFullYear()};
+  rebuildDayWheel();
+  const monthNames=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  createWheelPicker(document.getElementById('wheelMonth'),monthNames.map((m,i)=>({value:i+1,label:m})),aktionDateSel.month-1,v=>{aktionDateSel.month=v;rebuildDayWheel();});
+  const years=[today.getFullYear(),today.getFullYear()+1,today.getFullYear()+2];
+  createWheelPicker(document.getElementById('wheelYear'),years.map(y=>({value:y,label:String(y)})),0,v=>{aktionDateSel.year=v;rebuildDayWheel();});
+}
+function rebuildDayWheel(){
+  const maxDay=daysInMonth(aktionDateSel.month,aktionDateSel.year);
+  if(aktionDateSel.day>maxDay)aktionDateSel.day=maxDay;
+  const days=Array.from({length:maxDay},(_,i)=>({value:i+1,label:String(i+1)}));
+  createWheelPicker(document.getElementById('wheelDay'),days,aktionDateSel.day-1,v=>{aktionDateSel.day=v;});
+}
+function initHourWheel(elId,defaultHour){
+  const hours=Array.from({length:24},(_,i)=>({value:i,label:String(i).padStart(2,'0')+':00'}));
+  const el=document.getElementById(elId);
+  let val=defaultHour;
+  createWheelPicker(el,hours,defaultHour,v=>{val=v;});
+  return ()=>val;
+}
+let getReminderHourWeek=null,getReminderHour2d=null,getReminderHour1d=null;
+function toggleReminderWheel(which){
+  const map={week:['reminderWeekOn','reminderWeekWheelWrap','wheelHourWeek',10],'2d':['reminder2dOn','reminder2dWheelWrap','wheelHour2d',10],'1d':['reminder1dOn','reminder1dWheelWrap','wheelHour1d',19]};
+  const[checkId,wrapId,wheelId,defHour]=map[which];
+  const checked=document.getElementById(checkId).checked;
+  document.getElementById(wrapId).style.display=checked?'block':'none';
+  if(checked){
+    const getter=initHourWheel(wheelId,defHour);
+    if(which==='week')getReminderHourWeek=getter;
+    if(which==='2d')getReminderHour2d=getter;
+    if(which==='1d')getReminderHour1d=getter;
+  }
+}
+
 // ── AKTIONEN ──
 let aktionenList=[],aktionenTrash=[];
 async function loadAktionenFromDb(){
@@ -2336,7 +2462,9 @@ async function loadAktionenFromDb(){
 function renderAktionen(){
   const c=document.getElementById('aktionenEntries');c.innerHTML='';
   const formWrap=document.getElementById('aktionenFormWrap');
+  const wasHidden=formWrap&&formWrap.style.display==='none';
   if(formWrap)formWrap.style.display=currentUser?'block':'none';
+  if(currentUser&&wasHidden){initAktionDateWheels();}
   if(!aktionenList.length){
     c.innerHTML='<p style="text-align:center;color:var(--text-muted);font-size:.9rem;padding:1rem 0">Aktuell nichts geplant 📭</p>';
   }
@@ -2376,22 +2504,31 @@ async function addAktion(){
   if(!currentUser){showToast('❌ Dafür musst du eingeloggt sein');return;}
   const emoji=document.getElementById('aktionEmoji').value.trim()||'🎉';
   const titel=document.getElementById('aktionTitel').value.trim();
-  const datum=document.getElementById('aktionDatum').value;
+  const datum=`${aktionDateSel.year}-${String(aktionDateSel.month).padStart(2,'0')}-${String(aktionDateSel.day).padStart(2,'0')}`;
   const beschreibung=document.getElementById('aktionBeschreibung').value.trim();
   const bildInput=document.getElementById('aktionBild');
-  if(!titel||!datum){showToast('⚠️ Bitte Titel und Datum eingeben');return;}
+  if(!titel){showToast('⚠️ Bitte einen Titel eingeben');return;}
+  const reminders=[];
+  const tzOffsetHours=-new Date().getTimezoneOffset()/60; // z.B. +2 im Sommer (CEST), +1 im Winter (CET)
+  const toUtcHour=localHour=>((localHour-tzOffsetHours)%24+24)%24;
+  if(document.getElementById('reminderWeekOn').checked&&getReminderHourWeek)reminders.push({days_before:7,hour:toUtcHour(getReminderHourWeek())});
+  if(document.getElementById('reminder2dOn').checked&&getReminderHour2d)reminders.push({days_before:2,hour:toUtcHour(getReminderHour2d())});
+  if(document.getElementById('reminder1dOn').checked&&getReminderHour1d)reminders.push({days_before:1,hour:toUtcHour(getReminderHour1d())});
   let bild_url=null;
   if(bildInput&&bildInput.files[0]){
     bild_url=await uploadAktionBild({target:bildInput});
   }
-  const{data,error}=await sb.from('aktionen').insert({emoji,titel,datum,beschreibung,bild_url,created_by:currentUser.id}).select().single();
+  const{data,error}=await sb.from('aktionen').insert({emoji,titel,datum,beschreibung,bild_url,reminders,created_by:currentUser.id}).select().single();
   if(error){showToast('❌ '+error.message);return;}
   aktionenList.push(data);
   aktionenList.sort((a,b)=>a.datum.localeCompare(b.datum));
   renderAktionen();
   document.getElementById('aktionEmoji').value='';document.getElementById('aktionTitel').value='';
-  document.getElementById('aktionDatum').value='';document.getElementById('aktionBeschreibung').value='';
+  document.getElementById('aktionBeschreibung').value='';
   if(bildInput)bildInput.value='';
+  ['reminderWeekOn','reminder2dOn','reminder1dOn'].forEach(id=>{document.getElementById(id).checked=false;});
+  ['reminderWeekWheelWrap','reminder2dWheelWrap','reminder1dWheelWrap'].forEach(id=>{document.getElementById(id).style.display='none';});
+  initAktionDateWheels();
   showToast('✓ Termin eingetragen');
 }
 async function deleteAktion(id){
