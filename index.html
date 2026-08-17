@@ -144,7 +144,7 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .sm-facts{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.5rem}
 .sm-fact{font-size:.78rem;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:.3rem .85rem;color:var(--text-muted);transition:border-color .15s,color .15s}
 .sm-fact:hover{border-color:var(--accent);color:var(--text)}
-.sm-images{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+.sm-images{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;max-width:560px}
 .sm-img-wrap{border-radius:10px;overflow:hidden;aspect-ratio:4/3;background:var(--bg)}
 .sm-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
 .sm-img-label{font-size:.72rem;color:var(--text-muted);text-align:center;margin-top:.4rem}
@@ -153,7 +153,7 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .steckbrief-fullscreen{position:fixed;inset:0;z-index:600;background:var(--bg);transform:translateX(100%);transition:transform .34s cubic-bezier(.22,.61,.36,1);overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;pointer-events:none}
 .steckbrief-fullscreen.open{transform:translateX(0);pointer-events:auto}
 .steckbrief-fullscreen.dragging{transition:none}
-.sf-header{position:sticky;top:0;background:var(--nav-bg);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:.9rem 1.2rem;z-index:2;display:flex;align-items:center;gap:.8rem;transform:translateZ(0);will-change:transform}
+.sf-header{position:sticky;top:0;background:var(--nav-bg);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:.9rem 1.2rem;z-index:2;display:flex;align-items:center;gap:.8rem}
 .sf-back{background:none;border:1px solid var(--border);border-radius:9px;width:40px;height:40px;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);transition:border-color .2s,background-color .2s;flex-shrink:0}
 .sf-back:hover{border-color:var(--accent);background:var(--accent-light)}
 .sf-hint{font-size:.72rem;color:var(--text-muted);letter-spacing:.02em}
@@ -531,31 +531,20 @@ footer strong{color:var(--text)}
   <p class="section-label reveal">Was steht an</p>
   <h2 class="section-title reveal">Aktionen</h2>
   <p class="section-desc reveal">Kuchenbasar, Grillbasar, Disco & Co. – alle eingeloggten können Termine eintragen. Läuft ein Termin ab, verschwindet er automatisch.</p>
-  <div id="siteBannerWrap" style="display:none;margin-bottom:1.4rem">
-    <a id="siteBannerLink" href="#" target="_blank" rel="noopener" style="display:block">
-      <img id="siteBannerImg" src="" alt="Banner" style="width:100%;border-radius:var(--radius);display:block">
-    </a>
-  </div>
-  <div class="admin-panel reveal" style="display:none;margin-bottom:1.4rem;padding:.8rem;border:1px dashed var(--border);border-radius:8px">
-    <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.5rem">🛠️ Admin: Werbebanner</div>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-      <label class="btn btn-ghost btn-sm" style="cursor:pointer">Bild wählen<input type="file" accept="image/*" style="display:none" onchange="uploadSiteBanner(event)"></label>
-      <input type="text" id="bannerLinkInput" placeholder="Link beim Klick (optional)" style="flex:1;min-width:160px;padding:.5rem .7rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:16px">
-      <button class="btn btn-ghost btn-sm" onclick="saveBannerLink()">Link speichern</button>
-      <button class="btn btn-ghost btn-sm" onclick="removeSiteBanner()">🗑️ Banner entfernen</button>
-    </div>
-  </div>
   <div class="gaestebuch-layout">
-    <div class="gaestebuch-entries" id="aktionenEntries"></div>
+    <div>
+      <div class="gaestebuch-entries" id="aktionenEntries"></div>
+      <div id="aktionenTrashWrap" style="display:none"></div>
+    </div>
     <div class="gb-form reveal" id="aktionenFormWrap" style="display:none">
       <h3>Termin eintragen</h3>
       <div class="form-field"><label>Emoji</label><input type="text" id="aktionEmoji" placeholder="🎂" maxlength="4"></div>
       <div class="form-field"><label>Titel</label><input type="text" id="aktionTitel" placeholder="z.B. Kuchenbasar"></div>
       <div class="form-field"><label>Datum</label><input type="date" id="aktionDatum"></div>
       <div class="form-field"><label>Kurzbeschreibung (optional)</label><textarea id="aktionBeschreibung" rows="2" placeholder="z.B. Geld nicht vergessen 😉"></textarea></div>
+      <div class="form-field"><label>Bild (optional)</label><input type="file" accept="image/*" id="aktionBild"></div>
       <button class="btn btn-primary" onclick="addAktion()" style="width:100%;justify-content:center">+ Eintragen</button>
     </div>
-    <div class="gb-form reveal" id="aktionenLoginHint" style="display:none"></div>
   </div>
 </section>
 <hr class="sep">
@@ -1283,7 +1272,6 @@ async function refreshAuthUI(){
   }
   renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
   if(document.getElementById('aktionenEntries'))renderAktionen();
-  if(document.getElementById('siteBannerWrap'))renderSiteBanner();
   updatePushToggleUI();
 }
 function goToMySteckbrief(){
@@ -1596,7 +1584,7 @@ async function handleImageUpload(e,field,i){
   try{
     const compressed=await compressImage(file,1280,.82);
     const path=`${currentUser.id}/${field}_${Date.now()}.jpg`;
-    const{error:upErr}=await sb.storage.from('profile-photos').upload(path,compressed,{contentType:'image/jpeg',upsert:true});
+    const{error:upErr}=await sb.storage.from('profile-photos').upload(path,compressed,{contentType:'image/jpeg'});
     if(upErr){showToast('❌ Upload fehlgeschlagen: '+upErr.message);return;}
     const{data:urlData}=sb.storage.from('profile-photos').getPublicUrl(path);
     editDraft[field]=urlData.publicUrl;
@@ -2331,89 +2319,54 @@ async function addGbEntry(){
   showToast('Eintrag hinzugefügt ✓');
 }
 
-// ── SITE BANNER (Werbung/Ankündigung) ──
-let siteBannerData=null;
-async function loadSiteBanner(){
-  const{data,error}=await sb.from('site_banner').select('*').eq('id',1).single();
-  if(error){console.warn('Banner-Laden fehlgeschlagen:',error);return;}
-  siteBannerData=data;
-}
-function renderSiteBanner(){
-  const wrap=document.getElementById('siteBannerWrap');
-  const img=document.getElementById('siteBannerImg');
-  const link=document.getElementById('siteBannerLink');
-  const adminPanel=document.querySelector('#aktionen .admin-panel');
-  if(adminPanel)adminPanel.style.display=(currentUser&&currentUser.email==='juliusulrich@t-online.de')?'block':'none';
-  if(!wrap||!img||!link)return;
-  if(siteBannerData&&siteBannerData.image_url){
-    img.src=siteBannerData.image_url;
-    link.href=siteBannerData.link_url||'#';
-    link.style.pointerEvents=siteBannerData.link_url?'auto':'none';
-    wrap.style.display='block';
-  }else{
-    wrap.style.display='none';
-  }
-  const linkInput=document.getElementById('bannerLinkInput');
-  if(linkInput&&siteBannerData)linkInput.value=siteBannerData.link_url||'';
-}
-async function uploadSiteBanner(e){
-  const file=e.target.files[0];
-  if(!file)return;
-  if(!currentUser||currentUser.email!=='juliusulrich@t-online.de'){showToast('❌ Nur Admin kann das Banner ändern');return;}
-  if(!file.type.startsWith('image/')){showToast('❌ Bitte ein Bild auswählen');return;}
-  try{
-    const compressed=await compressImage(file,1600,.85);
-    const path=`banner-${Date.now()}.jpg`;
-    const{error:upErr}=await sb.storage.from('banner-images').upload(path,compressed,{contentType:'image/jpeg',upsert:true});
-    if(upErr){showToast('❌ '+upErr.message);return;}
-    const{data:urlData}=sb.storage.from('banner-images').getPublicUrl(path);
-    const{error:dbErr}=await sb.from('site_banner').update({image_url:urlData.publicUrl,updated_at:new Date().toISOString()}).eq('id',1);
-    if(dbErr){showToast('❌ '+dbErr.message);return;}
-    await loadSiteBanner();renderSiteBanner();
-    showToast('✓ Banner aktualisiert');
-  }catch(err){showToast('❌ Fehler beim Hochladen');console.error(err);}
-}
-async function saveBannerLink(){
-  if(!currentUser||currentUser.email!=='juliusulrich@t-online.de'){showToast('❌ Nur Admin');return;}
-  const link=document.getElementById('bannerLinkInput').value.trim();
-  const{error}=await sb.from('site_banner').update({link_url:link||null}).eq('id',1);
-  if(error){showToast('❌ '+error.message);return;}
-  await loadSiteBanner();renderSiteBanner();
-  showToast('✓ Link gespeichert');
-}
-async function removeSiteBanner(){
-  if(!currentUser||currentUser.email!=='juliusulrich@t-online.de'){showToast('❌ Nur Admin');return;}
-  if(!confirm('Banner wirklich entfernen?'))return;
-  const{error}=await sb.from('site_banner').update({image_url:null,link_url:null}).eq('id',1);
-  if(error){showToast('❌ '+error.message);return;}
-  await loadSiteBanner();renderSiteBanner();
-  showToast('✓ Banner entfernt');
-}
-
 // ── AKTIONEN ──
-let aktionenList=[];
+let aktionenList=[],aktionenTrash=[];
 async function loadAktionenFromDb(){
   const today=new Date().toISOString().slice(0,10);
   const{data,error}=await sb.from('aktionen').select('*').order('datum',{ascending:true});
   if(error){console.warn('Aktionen-Laden fehlgeschlagen:',error);return;}
-  aktionenList=(data||[]).filter(a=>a.datum>=today);
+  const all=(data||[]).filter(a=>a.datum>=today);
+  aktionenList=all.filter(a=>!a.geloescht_am);
+  aktionenTrash=all.filter(a=>a.geloescht_am);
 }
 function renderAktionen(){
   const c=document.getElementById('aktionenEntries');c.innerHTML='';
-  const formWrap=document.getElementById('aktionenFormWrap'),loginHint=document.getElementById('aktionenLoginHint');
+  const formWrap=document.getElementById('aktionenFormWrap');
   if(formWrap)formWrap.style.display=currentUser?'block':'none';
-  if(loginHint)loginHint.style.display=currentUser?'none':'block';
   if(!aktionenList.length){
     c.innerHTML='<p style="text-align:center;color:var(--text-muted);font-size:.9rem;padding:1rem 0">Aktuell nichts geplant 📭</p>';
-    return;
   }
   aktionenList.forEach(a=>{
     const ds=new Date(a.datum+'T00:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'long'});
     const el=document.createElement('div');el.className='gb-entry';
     const delBtn=currentUser?`<button class="gb-delete-btn" title="Löschen" onclick="deleteAktion('${a.id}')">🗑</button>`:'';
-    el.innerHTML=`<div class="gb-header"><span class="gb-name">${a.emoji||'🎉'} ${a.titel}</span><span class="gb-date">${ds}</span>${delBtn}</div>${a.beschreibung?`<div class="gb-text">${a.beschreibung}</div>`:''}`;
+    const imgHtml=a.bild_url?`<img src="${a.bild_url}" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-top:.7rem">`:'';
+    el.innerHTML=`<div class="gb-header"><span class="gb-name">${a.emoji||'🎉'} ${a.titel}</span><span class="gb-date">${ds}</span>${delBtn}</div>${a.beschreibung?`<div class="gb-text">${a.beschreibung}</div>`:''}${imgHtml}`;
     c.appendChild(el);
   });
+  renderAktionenTrash();
+}
+function renderAktionenTrash(){
+  const trashWrap=document.getElementById('aktionenTrashWrap');
+  if(!trashWrap)return;
+  if(!currentUser||!aktionenTrash.length){trashWrap.style.display='none';trashWrap.innerHTML='';return;}
+  trashWrap.style.display='block';
+  trashWrap.innerHTML=`<div style="font-size:.78rem;color:var(--text-muted);margin:1rem 0 .5rem">🗑️ Kürzlich gelöscht (7 Tage wiederherstellbar)</div>`+
+    aktionenTrash.map(a=>`<div class="gb-entry" style="opacity:.65;display:flex;justify-content:space-between;align-items:center;gap:.6rem">
+      <span>${a.emoji||'🎉'} ${a.titel}</span>
+      <button class="btn btn-ghost btn-sm" onclick="restoreAktion('${a.id}')">↺ Wiederherstellen</button>
+    </div>`).join('');
+}
+async function uploadAktionBild(e){
+  const file=e.target.files[0];
+  if(!file)return null;
+  if(!file.type.startsWith('image/')){showToast('❌ Bitte ein Bild auswählen');return null;}
+  const compressed=await compressImage(file,1200,.82);
+  const path=`${currentUser.id}/${Date.now()}.jpg`;
+  const{error}=await sb.storage.from('aktionen-images').upload(path,compressed,{contentType:'image/jpeg'});
+  if(error){showToast('❌ Bild-Upload fehlgeschlagen: '+error.message);return null;}
+  const{data:urlData}=sb.storage.from('aktionen-images').getPublicUrl(path);
+  return urlData.publicUrl;
 }
 async function addAktion(){
   if(!currentUser){showToast('❌ Dafür musst du eingeloggt sein');return;}
@@ -2421,23 +2374,40 @@ async function addAktion(){
   const titel=document.getElementById('aktionTitel').value.trim();
   const datum=document.getElementById('aktionDatum').value;
   const beschreibung=document.getElementById('aktionBeschreibung').value.trim();
+  const bildInput=document.getElementById('aktionBild');
   if(!titel||!datum){showToast('⚠️ Bitte Titel und Datum eingeben');return;}
-  const{data,error}=await sb.from('aktionen').insert({emoji,titel,datum,beschreibung,created_by:currentUser.id}).select().single();
+  let bild_url=null;
+  if(bildInput&&bildInput.files[0]){
+    bild_url=await uploadAktionBild({target:bildInput});
+  }
+  const{data,error}=await sb.from('aktionen').insert({emoji,titel,datum,beschreibung,bild_url,created_by:currentUser.id}).select().single();
   if(error){showToast('❌ '+error.message);return;}
   aktionenList.push(data);
   aktionenList.sort((a,b)=>a.datum.localeCompare(b.datum));
   renderAktionen();
   document.getElementById('aktionEmoji').value='';document.getElementById('aktionTitel').value='';
   document.getElementById('aktionDatum').value='';document.getElementById('aktionBeschreibung').value='';
+  if(bildInput)bildInput.value='';
   showToast('✓ Termin eingetragen');
 }
 async function deleteAktion(id){
-  if(!confirm('Diesen Termin wirklich löschen?'))return;
-  const{error}=await sb.from('aktionen').delete().eq('id',id);
+  if(!confirm('Diesen Termin löschen? (Kann 7 Tage lang wiederhergestellt werden)'))return;
+  const{error}=await sb.from('aktionen').update({geloescht_am:new Date().toISOString()}).eq('id',id);
   if(error){showToast('❌ '+error.message);return;}
+  const item=aktionenList.find(a=>a.id===id);
   aktionenList=aktionenList.filter(a=>a.id!==id);
+  if(item){item.geloescht_am=new Date().toISOString();aktionenTrash.push(item);}
   renderAktionen();
-  showToast('✓ Gelöscht');
+  showToast('✓ Gelöscht (im Papierkorb wiederherstellbar)');
+}
+async function restoreAktion(id){
+  const{error}=await sb.from('aktionen').update({geloescht_am:null}).eq('id',id);
+  if(error){showToast('❌ '+error.message);return;}
+  const item=aktionenTrash.find(a=>a.id===id);
+  aktionenTrash=aktionenTrash.filter(a=>a.id!==id);
+  if(item){item.geloescht_am=null;aktionenList.push(item);aktionenList.sort((a,b)=>a.datum.localeCompare(b.datum));}
+  renderAktionen();
+  showToast('✓ Wiederhergestellt');
 }
 
 // ── PUSH NOTIFICATIONS ──
@@ -2679,8 +2649,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('themeBtn').textContent='☀️';
   }
   loadGalerieKategorienFromDb().finally(()=>{
-    Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb(),loadGalerieFromDb(),loadAktionenFromDb(),loadSiteBanner()]).finally(()=>{
-      initSchueler();initSammelkarten();initGalerie();renderGb();renderAktionen();renderSiteBanner();updateKasseUI();
+    Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb(),loadGalerieFromDb(),loadAktionenFromDb()]).finally(()=>{
+      initSchueler();initSammelkarten();initGalerie();renderGb();renderAktionen();updateKasseUI();
       refreshAuthUI();
       setTimeout(()=>{document.getElementById('kasseBar').style.width=Math.min(100,Math.round(kasseValue/KASSE_GOAL*100))+'%';},800);
     });
