@@ -270,6 +270,8 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .gb-name{font-weight:600;font-size:.95rem;color:var(--text)}
 .gb-date{font-size:.72rem;color:var(--text-muted)}
 .gb-delete-btn{display:none;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.85rem;margin-left:.6rem;padding:.1rem .3rem;border-radius:4px;transition:color .15s,background .15s}
+.aktion-delete-btn{display:inline-block;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.85rem;margin-left:.6rem;padding:.1rem .3rem;border-radius:4px;transition:color .15s,background .15s}
+.aktion-delete-btn:hover{color:var(--accent);background:rgba(0,0,0,.06)}
 .gb-delete-btn:hover{color:#D94A4A;background:rgba(217,74,74,.1)}
 body.admin-mode .gb-delete-btn{display:inline-block}
 .gb-text{font-size:.88rem;color:var(--text-muted);line-height:1.6}
@@ -441,7 +443,6 @@ footer strong{color:var(--text)}
   <a href="#galerie" onclick="closeMobileMenu()">Galerie</a>
   <a href="#gaestebuch" onclick="closeMobileMenu()">Gästebuch</a>
   <a href="#spiele" onclick="closeMobileMenu()">Spiele</a>
-  <a href="#" onclick="closeMobileMenu();openModal('accountModal');return false" id="mobileAccountLink">👤 Mein Login</a>
   <div class="mobile-suit">♠ ♥ ♦ ♣</div>
 </div>
 
@@ -1383,7 +1384,10 @@ function handleLogoClick(e){
   if(logoHoldTriggered){
     e.preventDefault();
     logoHoldTriggered=false;
+    return;
   }
+  e.preventDefault();
+  openModal('accountModal');
 }
 
 // ── HAMBURGER MENU ──
@@ -2339,7 +2343,7 @@ function renderAktionen(){
   aktionenList.forEach(a=>{
     const ds=new Date(a.datum+'T00:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'long'});
     const el=document.createElement('div');el.className='gb-entry';
-    const delBtn=currentUser?`<button class="gb-delete-btn" title="Löschen" onclick="deleteAktion('${a.id}')">🗑</button>`:'';
+    const delBtn=currentUser?`<button class="aktion-delete-btn" title="Löschen" onclick="deleteAktion('${a.id}')">🗑</button>`:'';
     const imgHtml=a.bild_url?`<img src="${a.bild_url}" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-top:.7rem">`:'';
     el.innerHTML=`<div class="gb-header"><span class="gb-name">${a.emoji||'🎉'} ${a.titel}</span><span class="gb-date">${ds}</span>${delBtn}</div>${a.beschreibung?`<div class="gb-text">${a.beschreibung}</div>`:''}${imgHtml}`;
     c.appendChild(el);
@@ -2632,8 +2636,8 @@ window.addEventListener('scroll',()=>{
 
 // ── INIT ──
 // ── SOCIAL MEDIA LINKS (hier eintragen, sobald Accountnamen feststehen) ──
-const SOCIAL_INSTAGRAM_URL='#'; // z.B. 'https://instagram.com/abivegas2027'
-const SOCIAL_TIKTOK_URL='#';    // z.B. 'https://tiktok.com/@abivegas2027'
+const SOCIAL_INSTAGRAM_URL='https://instagram.com/abi27sportschule';
+const SOCIAL_TIKTOK_URL='https://tiktok.com/@sportschulenhalle.abi27';
 
 document.addEventListener('DOMContentLoaded',()=>{
   const igLink=document.getElementById('footerInstaLink'),ttLink=document.getElementById('footerTiktokLink');
