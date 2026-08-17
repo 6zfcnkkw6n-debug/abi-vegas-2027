@@ -21,7 +21,7 @@ html{scroll-behavior:smooth;background:var(--bg)}
 body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.6;overflow-x:hidden;transition:background-color .4s ease,color .4s ease}
 nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:calc(1.2rem + env(safe-area-inset-top)) 3rem 1.2rem;background:var(--nav-bg);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);transition:padding .3s,background-color .4s ease,border-color .4s ease}
 body.steckbrief-open nav{display:none}
-nav.scrolled{padding:.8rem 3rem}
+nav.scrolled{padding:calc(.8rem + env(safe-area-inset-top)) 3rem .8rem}
 .nav-logo{font-family:var(--font-display);font-size:1.2rem;font-weight:600;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:.4rem}
 .nav-logo span{color:var(--accent)}
 .nav-links{display:flex;gap:2rem;list-style:none}
