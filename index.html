@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>Abi Vegas 2027 – Sportschule Halle</title>
 <link rel="manifest" href="manifest.json">
@@ -20,6 +20,7 @@ body.dark{color-scheme:dark;--bg:#171512;--bg-card:#211F1A;--text:#F0EAD8;--text
 html{scroll-behavior:smooth;background:var(--bg)}
 body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.6;overflow-x:hidden;transition:background-color .4s ease,color .4s ease}
 nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:1.2rem 3rem;background:var(--nav-bg);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);transition:padding .3s,background-color .4s ease,border-color .4s ease}
+body.steckbrief-open nav{display:none}
 nav.scrolled{padding:.8rem 3rem}
 .nav-logo{font-family:var(--font-display);font-size:1.2rem;font-weight:600;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:.4rem}
 .nav-logo span{color:var(--accent)}
@@ -396,7 +397,6 @@ footer strong{color:var(--text)}
   </ul>
   <div style="display:flex;align-items:center;gap:.6rem">
     <button class="nav-theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Hell/Dunkel umschalten">🌙</button>
-    <button class="nav-bell-btn" id="accountBtn" onclick="openModal('accountModal')" aria-label="Mein Login" title="Mein Login">👤</button>
     <button class="nav-bell-btn" id="bellBtn" onclick="openInbox()" aria-label="Nachrichten">🔔<span class="nav-bell-badge" id="inboxBadge" style="display:none">0</span></button>
     <button class="nav-hamburger" id="hamburger" onclick="toggleMobileMenu()" aria-label="Menü">
       <span></span><span></span><span></span>
@@ -1325,12 +1325,12 @@ async function refreshAuthUI(){
   const out=document.getElementById('accountLoggedOut'),into=document.getElementById('accountLoggedIn');
   document.getElementById('accountSetNewPw').style.display='none';
   if(currentUser){
-    btn.textContent='✓';btn.title='Eingeloggt';btn.classList.add('active');
+    if(btn){btn.textContent='✓';btn.title='Eingeloggt';btn.classList.add('active');}
     out.style.display='none';into.style.display='block';
     document.getElementById('accountEmailLabel').textContent=currentUser.email;
     document.getElementById('accountModalTitle').textContent='Mein Account';
   }else{
-    btn.textContent='👤';btn.title='Mein Login';btn.classList.remove('active');
+    if(btn){btn.textContent='👤';btn.title='Mein Login';btn.classList.remove('active');}
     out.style.display='block';into.style.display='none';
     document.getElementById('accountModalTitle').textContent='Mein Login';
     setAuthTab('login');
@@ -1566,11 +1566,13 @@ function openSteckbriefFullscreen(i){
   sf.classList.add('open');
   sf.scrollTop=0;
   document.body.style.overflow='hidden';
+  document.body.classList.add('steckbrief-open');
 }
 function closeSteckbriefFullscreen(){
   const sf=document.getElementById('steckbriefFullscreen');
   sf.classList.remove('open');
   document.body.style.overflow='';
+  document.body.classList.remove('steckbrief-open');
   editingIdx=null;editDraft=null;
   openSchuelerIdx=null;
   renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
