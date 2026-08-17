@@ -342,12 +342,12 @@ footer strong{color:var(--text)}
 .mobile-menu a:hover{color:var(--accent)}
 .mobile-menu .mobile-suit{font-size:1.2rem;letter-spacing:.5em;color:var(--accent);opacity:.4}
 @media(max-width:1024px){
-  nav{padding:1rem 1.6rem}
+  nav{padding:calc(1rem + env(safe-area-inset-top)) 1.6rem 1rem}
   .nav-links{display:none !important}
   .nav-hamburger{display:flex}
 }
 @media(max-width:768px){
-  nav{padding:.9rem 1.2rem}
+  nav{padding:calc(.9rem + env(safe-area-inset-top)) 1.2rem .9rem}
   section{padding:3.5rem 1.2rem}
   .gaestebuch-layout{grid-template-columns:1fr}
   .donation-card{flex-direction:column}
@@ -362,7 +362,7 @@ footer strong{color:var(--text)}
   .sm-card-avatar{width:36px;height:36px;margin-bottom:.35rem}
   .sm-card-sport{display:none}
   #schuelerModalBox{height:92vh;max-height:92vh}
-  .modal-overlay{align-items:flex-start;padding-top:1.5rem}
+  .modal-overlay{align-items:flex-start;padding-top:calc(1.5rem + env(safe-area-inset-top))}
 }
 @media(max-width:600px){
   nav>div{gap:.35rem !important}
@@ -370,7 +370,7 @@ footer strong{color:var(--text)}
   .nav-admin-btn{padding:.35rem .5rem}
 }
 @media(max-width:480px){
-  nav{padding:.8rem .9rem}
+  nav{padding:calc(.8rem + env(safe-area-inset-top)) .9rem .8rem}
   nav>div{gap:.28rem !important}
   .nav-admin-label{display:none}
   .nav-admin-btn{padding:.35rem .45rem}
