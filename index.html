@@ -644,10 +644,10 @@ footer strong{color:var(--text)}
 <footer><strong>Abi Vegas 2027 · Sportschule Halle</strong><br><span style="display:block;margin-top:.3rem">Mit ❤️ von der Klasse gebaut</span><span class="footer-suits">♠ ♥ ♦ ♣</span>
   <div style="margin-top:1.1rem;font-size:.75rem;color:var(--text-muted)">Unsere Socials</div>
   <div style="display:flex;justify-content:center;gap:1rem;margin-top:.5rem">
-    <a href="#" id="footerInstaLink" target="_blank" rel="noopener" aria-label="Instagram" style="color:var(--text-muted);display:inline-flex">
+    <a href="#" id="footerInstaLink" onclick="return openSocialApp(event,'instagram://user?username=abi27sportschule','https://instagram.com/abi27sportschule')" aria-label="Instagram" style="color:var(--text-muted);display:inline-flex">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none"/></svg>
     </a>
-    <a href="#" id="footerTiktokLink" target="_blank" rel="noopener" aria-label="TikTok" style="color:var(--text-muted);display:inline-flex">
+    <a href="#" id="footerTiktokLink" onclick="return openSocialApp(event,'tiktok://user?username=sportschulenhalle.abi27','https://tiktok.com/@sportschulenhalle.abi27')" aria-label="TikTok" style="color:var(--text-muted);display:inline-flex">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.3c-.8-.7-1.3-1.7-1.4-2.8h-3v13.4a2.6 2.6 0 1 1-1.8-2.5v-3.1a5.6 5.6 0 1 0 4.8 5.5V9.2a6.9 6.9 0 0 0 4 1.3V7.5a4 4 0 0 1-2.6-1.2Z"/></svg>
     </a>
   </div>
@@ -2635,14 +2635,20 @@ window.addEventListener('scroll',()=>{
 },{passive:true});
 
 // ── INIT ──
-// ── SOCIAL MEDIA LINKS (hier eintragen, sobald Accountnamen feststehen) ──
-const SOCIAL_INSTAGRAM_URL='https://instagram.com/abi27sportschule';
-const SOCIAL_TIKTOK_URL='https://tiktok.com/@sportschulenhalle.abi27';
+// ── SOCIAL MEDIA LINKS ── (Insta: abi27sportschule, TikTok: @sportschulenhalle.abi27 - Aenderung: onclick-Handler in der Footer-HTML anpassen)
+function openSocialApp(e,appUrl,webUrl){
+  e.preventDefault();
+  const start=Date.now();
+  window.location.href=appUrl;
+  setTimeout(()=>{
+    if(Date.now()-start<1600&&!document.hidden){
+      window.location.href=webUrl;
+    }
+  },1000);
+  return false;
+}
 
 document.addEventListener('DOMContentLoaded',()=>{
-  const igLink=document.getElementById('footerInstaLink'),ttLink=document.getElementById('footerTiktokLink');
-  if(igLink)igLink.href=SOCIAL_INSTAGRAM_URL;
-  if(ttLink)ttLink.href=SOCIAL_TIKTOK_URL;
   registerServiceWorker().finally(()=>updatePushToggleUI());
   checkA2hsBanner();
   const savedTheme=localStorage.getItem('theme');
