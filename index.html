@@ -266,7 +266,7 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .wheel-picker::-webkit-scrollbar{display:none}
 .wheel-picker-item{height:44px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;font-size:1.05rem;color:var(--text-muted);font-variant-numeric:tabular-nums;transition:color .15s,font-size .15s,font-weight .15s}
 .wheel-picker-item.selected{color:var(--text);font-weight:700;font-size:1.25rem}
-.wheel-picker-highlight{position:absolute;top:50%;left:0;right:0;height:44px;transform:translateY(-50%);border-top:1px solid var(--border);border-bottom:1px solid var(--border);pointer-events:none}
+.wheel-picker-highlight{position:absolute;top:50%;left:0;right:0;height:44px;transform:translateY(-50%);border-top:1.5px solid var(--accent);border-bottom:1.5px solid var(--accent);pointer-events:none;opacity:.55}
 .wheel-row{display:flex;gap:.6rem}
 .wheel-col{flex:1;position:relative}
 .wheel-col-label{text-align:center;font-size:.68rem;color:var(--text-muted);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.05em}
@@ -578,7 +578,8 @@ footer strong{color:var(--text)}
         </div>
         <div class="wheel-col" id="reminder1dWheelWrap" style="display:none;margin:.4rem 0"><div class="wheel-col-label">Uhrzeit</div><div class="wheel-picker" id="wheelHour1d"></div></div>
       </div>
-      <button class="btn btn-primary" onclick="addAktion()" style="width:100%;justify-content:center">+ Eintragen</button>
+      <button class="btn btn-primary" id="aktionSubmitBtn" onclick="addAktion()" style="width:100%;justify-content:center">+ Eintragen</button>
+      <button class="btn btn-ghost" id="aktionCancelEditBtn" onclick="cancelEditAktion()" style="width:100%;justify-content:center;margin-top:.5rem;display:none">Abbrechen</button>
     </div>
   </div>
 </section>
@@ -2423,14 +2424,15 @@ function createWheelPicker(container,items,initialIndex,onChange){
 }
 let aktionDateSel={day:1,month:1,year:2026};
 function daysInMonth(month,year){return new Date(year,month,0).getDate();}
-function initAktionDateWheels(){
-  const today=new Date();
-  aktionDateSel={day:today.getDate(),month:today.getMonth()+1,year:today.getFullYear()};
+function initAktionDateWheels(presetDate){
+  const base=presetDate?new Date(presetDate+'T00:00:00'):new Date();
+  aktionDateSel={day:base.getDate(),month:base.getMonth()+1,year:base.getFullYear()};
   rebuildDayWheel();
   const monthNames=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
   createWheelPicker(document.getElementById('wheelMonth'),monthNames.map((m,i)=>({value:i+1,label:m})),aktionDateSel.month-1,v=>{aktionDateSel.month=v;rebuildDayWheel();});
-  const years=[today.getFullYear(),today.getFullYear()+1,today.getFullYear()+2];
-  createWheelPicker(document.getElementById('wheelYear'),years.map(y=>({value:y,label:String(y)})),0,v=>{aktionDateSel.year=v;rebuildDayWheel();});
+  const years=[new Date().getFullYear(),new Date().getFullYear()+1,new Date().getFullYear()+2];
+  const yearIdx=Math.max(0,years.indexOf(aktionDateSel.year));
+  createWheelPicker(document.getElementById('wheelYear'),years.map(y=>({value:y,label:String(y)})),yearIdx,v=>{aktionDateSel.year=v;rebuildDayWheel();});
 }
 function rebuildDayWheel(){
   const maxDay=daysInMonth(aktionDateSel.month,aktionDateSel.year);
@@ -2481,7 +2483,7 @@ function renderAktionen(){
   aktionenList.forEach(a=>{
     const ds=new Date(a.datum+'T00:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'long'});
     const el=document.createElement('div');el.className='gb-entry';
-    const delBtn=currentUser?`<button class="aktion-delete-btn" title="Löschen" onclick="deleteAktion('${a.id}')">🗑</button>`:'';
+    const delBtn=currentUser?`<button class="aktion-delete-btn" title="Löschen" onclick="deleteAktion('${a.id}')">🗑</button><button class="aktion-delete-btn" title="Bearbeiten" onclick="editAktion('${a.id}')">✏️</button>`:'';
     const imgHtml=a.bild_url?`<img src="${a.bild_url}" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-top:.7rem">`:'';
     el.innerHTML=`<div class="gb-header"><span class="gb-name">${a.emoji||'🎉'} ${a.titel}</span><span class="gb-date">${ds}</span>${delBtn}</div>${a.beschreibung?`<div class="gb-text">${a.beschreibung}</div>`:''}${imgHtml}`;
     c.appendChild(el);
@@ -2510,6 +2512,49 @@ async function uploadAktionBild(e){
   const{data:urlData}=sb.storage.from('aktionen-images').getPublicUrl(path);
   return urlData.publicUrl;
 }
+let editingAktionId=null;
+function editAktion(id){
+  const a=aktionenList.find(x=>x.id===id);
+  if(!a)return;
+  editingAktionId=id;
+  document.getElementById('aktionEmoji').value=a.emoji||'';
+  document.getElementById('aktionTitel').value=a.titel||'';
+  document.getElementById('aktionBeschreibung').value=a.beschreibung||'';
+  initAktionDateWheels(a.datum);
+  const reminders=a.reminders||[];
+  const tzOffsetHours=-new Date().getTimezoneOffset()/60;
+  const toLocalHour=utcHour=>((utcHour+tzOffsetHours)%24+24)%24;
+  const presetMap={7:['reminderWeekOn','week'],2:['reminder2dOn','2d'],1:['reminder1dOn','1d']};
+  ['reminderWeekOn','reminder2dOn','reminder1dOn'].forEach(id2=>{document.getElementById(id2).checked=false;});
+  ['reminderWeekWheelWrap','reminder2dWheelWrap','reminder1dWheelWrap'].forEach(id2=>{document.getElementById(id2).style.display='none';});
+  reminders.forEach(r=>{
+    const preset=presetMap[r.days_before];
+    if(!preset)return;
+    const[checkId,which]=preset;
+    document.getElementById(checkId).checked=true;
+    toggleReminderWheel(which);
+    const hourWheelId={week:'wheelHourWeek','2d':'wheelHour2d','1d':'wheelHour1d'}[which];
+    const getter=initHourWheel(hourWheelId,Math.round(toLocalHour(r.hour)));
+    if(which==='week')getReminderHourWeek=getter;
+    if(which==='2d')getReminderHour2d=getter;
+    if(which==='1d')getReminderHour1d=getter;
+  });
+  const btn=document.getElementById('aktionSubmitBtn');
+  btn.textContent='✓ Änderungen speichern';
+  document.getElementById('aktionCancelEditBtn').style.display='inline-flex';
+  document.getElementById('aktionenFormWrap').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function cancelEditAktion(){
+  editingAktionId=null;
+  document.getElementById('aktionEmoji').value='';
+  document.getElementById('aktionTitel').value='';
+  document.getElementById('aktionBeschreibung').value='';
+  ['reminderWeekOn','reminder2dOn','reminder1dOn'].forEach(id=>{document.getElementById(id).checked=false;});
+  ['reminderWeekWheelWrap','reminder2dWheelWrap','reminder1dWheelWrap'].forEach(id=>{document.getElementById(id).style.display='none';});
+  initAktionDateWheels();
+  document.getElementById('aktionSubmitBtn').textContent='+ Eintragen';
+  document.getElementById('aktionCancelEditBtn').style.display='none';
+}
 async function addAktion(){
   if(!currentUser){showToast('❌ Dafür musst du eingeloggt sein');return;}
   const emoji=document.getElementById('aktionEmoji').value.trim()||'🎉';
@@ -2527,6 +2572,20 @@ async function addAktion(){
   let bild_url=null;
   if(bildInput&&bildInput.files[0]){
     bild_url=await uploadAktionBild({target:bildInput});
+  }
+  if(editingAktionId){
+    const existing=aktionenList.find(a=>a.id===editingAktionId);
+    const payload={emoji,titel,datum,beschreibung,reminders,sent_reminders:[]};
+    if(bild_url)payload.bild_url=bild_url;
+    const{data,error}=await sb.from('aktionen').update(payload).eq('id',editingAktionId).select().single();
+    if(error){showToast('❌ '+error.message);return;}
+    const idx=aktionenList.findIndex(a=>a.id===editingAktionId);
+    if(idx>=0)aktionenList[idx]=data;
+    aktionenList.sort((a,b)=>a.datum.localeCompare(b.datum));
+    cancelEditAktion();
+    renderAktionen();
+    showToast('✓ Änderungen gespeichert');
+    return;
   }
   const{data,error}=await sb.from('aktionen').insert({emoji,titel,datum,beschreibung,bild_url,reminders,created_by:currentUser.id}).select().single();
   if(error){showToast('❌ '+error.message);return;}
