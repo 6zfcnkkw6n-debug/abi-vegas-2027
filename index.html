@@ -260,6 +260,7 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .gallery-lb-thumb canvas,.gallery-lb-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 /* GÄSTEBUCH */
 .gaestebuch-layout{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start}
+.aktionen-layout{display:flex;flex-direction:column;gap:1.5rem;max-width:640px;margin:0 auto}
 .gaestebuch-entries{display:flex;flex-direction:column;gap:1rem}
 .wheel-picker-outer{position:relative;height:176px}
 .wheel-picker{height:100%;overflow-y:auto;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -543,7 +544,7 @@ footer strong{color:var(--text)}
   <p class="section-label reveal">Was steht an</p>
   <h2 class="section-title reveal">Aktionen</h2>
   <p class="section-desc reveal">Kuchenbasar, Grillbasar, Disco & Co. – alle eingeloggten können Termine eintragen. Läuft ein Termin ab, verschwindet er automatisch.</p>
-  <div class="gaestebuch-layout">
+  <div class="aktionen-layout">
     <div>
       <div class="gaestebuch-entries" id="aktionenEntries"></div>
       <div id="aktionenTrashWrap" style="display:none"></div>
@@ -885,6 +886,18 @@ footer strong{color:var(--text)}
 </div>
 
 <!-- SAMMELKARTE DETAIL MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-body" style="text-align:center;padding-top:1.6rem">
+      <div id="confirmModalText" style="font-size:1rem;margin-bottom:1.4rem;line-height:1.5"></div>
+      <div style="display:flex;gap:.7rem">
+        <button class="btn btn-ghost" id="confirmModalCancelBtn" style="flex:1;justify-content:center">Abbrechen</button>
+        <button class="btn" id="confirmModalOkBtn" style="flex:1;justify-content:center;background:var(--red);color:#fff">Löschen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="karteModal">
   <div class="modal" style="max-width:400px">
     <div class="modal-header"><div class="modal-title">🎴 Sammelkarte</div><div class="modal-sub">Antippen oder wischen zum Umdrehen</div><button class="modal-close" onclick="closeModal('karteModal')">✕</button></div>
@@ -1067,6 +1080,21 @@ const MONTHS_DE=['Januar','Februar','März','April','Mai','Juni','Juli','August'
 
 // ── HELPERS ──
 function showToast(msg,dur=3000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+function confirmDialog(text){
+  return new Promise(resolve=>{
+    document.getElementById('confirmModalText').textContent=text;
+    const okBtn=document.getElementById('confirmModalOkBtn');
+    const cancelBtn=document.getElementById('confirmModalCancelBtn');
+    const cleanup=(result)=>{
+      closeModal('confirmModal');
+      okBtn.onclick=null;cancelBtn.onclick=null;
+      resolve(result);
+    };
+    okBtn.onclick=()=>cleanup(true);
+    cancelBtn.onclick=()=>cleanup(false);
+    openModal('confirmModal');
+  });
+}
 function openModal(id){
   document.getElementById(id).classList.add('open');
   if(id==='mottowocheModal')renderMottowoche();
@@ -2496,10 +2524,23 @@ function renderAktionenTrash(){
   if(!currentUser||!aktionenTrash.length){trashWrap.style.display='none';trashWrap.innerHTML='';return;}
   trashWrap.style.display='block';
   trashWrap.innerHTML=`<div style="font-size:.78rem;color:var(--text-muted);margin:1rem 0 .5rem">🗑️ Kürzlich gelöscht (7 Tage wiederherstellbar)</div>`+
-    aktionenTrash.map(a=>`<div class="gb-entry" style="opacity:.65;display:flex;justify-content:space-between;align-items:center;gap:.6rem">
+    aktionenTrash.map(a=>`<div class="gb-entry" style="opacity:.65;display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap">
       <span>${a.emoji||'🎉'} ${a.titel}</span>
-      <button class="btn btn-ghost btn-sm" onclick="restoreAktion('${a.id}')">↺ Wiederherstellen</button>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-ghost btn-sm" onclick="restoreAktion('${a.id}')">↺ Wiederherstellen</button>
+        <button class="btn btn-ghost btn-sm" onclick="permanentlyDeleteAktion('${a.id}')">🗑️ Endgültig löschen</button>
+      </div>
     </div>`).join('');
+}
+async function permanentlyDeleteAktion(id){
+  const item=aktionenTrash.find(a=>a.id===id);
+  const ok=await confirmDialog(`"${item?item.titel:'Termin'}" wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.`);
+  if(!ok)return;
+  const{error}=await sb.from('aktionen').delete().eq('id',id);
+  if(error){showToast('❌ '+error.message);return;}
+  aktionenTrash=aktionenTrash.filter(a=>a.id!==id);
+  renderAktionenTrash();
+  showToast('✓ Endgültig gelöscht');
 }
 async function uploadAktionBild(e){
   const file=e.target.files[0];
