@@ -150,14 +150,14 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .sm-img-label{font-size:.72rem;color:var(--text-muted);text-align:center;margin-top:.4rem}
 /* REMINDER BANNER */
 /* STECKBRIEF VOLLBILD (eigene Seite statt Modal-Ausklappen) */
-.steckbrief-fullscreen{position:fixed;inset:0;z-index:600;background:var(--bg);transform:translateX(100%);transition:transform .34s cubic-bezier(.22,.61,.36,1);overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
-.steckbrief-fullscreen.open{transform:translateX(0)}
+.steckbrief-fullscreen{position:fixed;inset:0;z-index:600;background:var(--bg);transform:translateX(100%);transition:transform .34s cubic-bezier(.22,.61,.36,1);overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;pointer-events:none}
+.steckbrief-fullscreen.open{transform:translateX(0);pointer-events:auto}
 .steckbrief-fullscreen.dragging{transition:none}
-.sf-header{position:sticky;top:0;background:var(--nav-bg);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:.9rem 1.2rem;z-index:2;display:flex;align-items:center;gap:.8rem}
+.sf-header{position:sticky;top:0;background:var(--nav-bg);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:.9rem 1.2rem;z-index:2;display:flex;align-items:center;gap:.8rem;transform:translateZ(0);will-change:transform}
 .sf-back{background:none;border:1px solid var(--border);border-radius:9px;width:40px;height:40px;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);transition:border-color .2s,background-color .2s;flex-shrink:0}
 .sf-back:hover{border-color:var(--accent);background:var(--accent-light)}
 .sf-hint{font-size:.72rem;color:var(--text-muted);letter-spacing:.02em}
-.sf-body{padding:1.6rem 1.5rem 3.5rem;max-width:640px;margin:0 auto}
+.sf-body{padding:1.6rem 1.5rem 3.5rem;max-width:900px;margin:0 auto}
 .sf-body .sm-detail{border-top:none;margin-top:0;padding-top:0}
 @media (min-width:701px){.sf-hint{display:inline}}
 @media (max-width:700px){.sf-hint{display:none}}
@@ -215,10 +215,6 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .vorbestell-form{max-width:360px}
 /* SLOT MACHINE */
 .slot-machine{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:2.5rem;box-shadow:var(--shadow);text-align:center;max-width:420px;transition:background-color .4s ease,border-color .4s ease}
-.gluecksrad-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:2.5rem;box-shadow:var(--shadow);text-align:center;max-width:340px;transition:background-color .4s ease,border-color .4s ease}
-.gluecksrad-wrap{position:relative;width:240px;height:240px;margin:0 auto}
-.gluecksrad-pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:1.4rem;color:var(--accent);z-index:2}
-#gluecksradCanvas{border-radius:50%;display:block;transition:transform 3.6s cubic-bezier(.13,.68,.15,1)}
 .slot-reels{display:flex;gap:.8rem;justify-content:center;margin-bottom:1.5rem}
 .slot-reel{width:64px;height:64px;background:var(--bg);border:2px solid var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:2rem;transition:background-color .4s ease,border-color .4s ease}
 .slot-reel.spinning{animation:slotSpin .1s linear infinite}
@@ -266,6 +262,10 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .gaestebuch-layout{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start}
 .gaestebuch-entries{display:flex;flex-direction:column;gap:1rem}
 .gb-entry{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;box-shadow:var(--shadow);transition:background-color .4s ease,border-color .4s ease}
+#aktionenEntries .gb-entry{padding:1.9rem 1.8rem}
+#aktionenEntries .gb-name{font-size:1.25rem}
+#aktionenEntries .gb-date{font-size:.95rem}
+#aktionenEntries .gb-text{font-size:1.05rem;margin-top:.5rem}
 .gb-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem}
 .gb-name{font-weight:600;font-size:.95rem;color:var(--text)}
 .gb-date{font-size:.72rem;color:var(--text-muted)}
@@ -531,6 +531,20 @@ footer strong{color:var(--text)}
   <p class="section-label reveal">Was steht an</p>
   <h2 class="section-title reveal">Aktionen</h2>
   <p class="section-desc reveal">Kuchenbasar, Grillbasar, Disco & Co. – alle eingeloggten können Termine eintragen. Läuft ein Termin ab, verschwindet er automatisch.</p>
+  <div id="siteBannerWrap" style="display:none;margin-bottom:1.4rem">
+    <a id="siteBannerLink" href="#" target="_blank" rel="noopener" style="display:block">
+      <img id="siteBannerImg" src="" alt="Banner" style="width:100%;border-radius:var(--radius);display:block">
+    </a>
+  </div>
+  <div class="admin-panel reveal" style="display:none;margin-bottom:1.4rem;padding:.8rem;border:1px dashed var(--border);border-radius:8px">
+    <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.5rem">🛠️ Admin: Werbebanner</div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer">Bild wählen<input type="file" accept="image/*" style="display:none" onchange="uploadSiteBanner(event)"></label>
+      <input type="text" id="bannerLinkInput" placeholder="Link beim Klick (optional)" style="flex:1;min-width:160px;padding:.5rem .7rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:16px">
+      <button class="btn btn-ghost btn-sm" onclick="saveBannerLink()">Link speichern</button>
+      <button class="btn btn-ghost btn-sm" onclick="removeSiteBanner()">🗑️ Banner entfernen</button>
+    </div>
+  </div>
   <div class="gaestebuch-layout">
     <div class="gaestebuch-entries" id="aktionenEntries"></div>
     <div class="gb-form reveal" id="aktionenFormWrap" style="display:none">
@@ -541,7 +555,7 @@ footer strong{color:var(--text)}
       <div class="form-field"><label>Kurzbeschreibung (optional)</label><textarea id="aktionBeschreibung" rows="2" placeholder="z.B. Geld nicht vergessen 😉"></textarea></div>
       <button class="btn btn-primary" onclick="addAktion()" style="width:100%;justify-content:center">+ Eintragen</button>
     </div>
-    <div class="gb-form reveal" id="aktionenLoginHint" style="text-align:center;color:var(--text-muted);font-size:.85rem">Zum Eintragen musst du eingeloggt sein.</div>
+    <div class="gb-form reveal" id="aktionenLoginHint" style="display:none"></div>
   </div>
 </section>
 <hr class="sep">
@@ -634,19 +648,21 @@ footer strong{color:var(--text)}
       <button class="btn btn-primary" onclick="spinSlot()">🎲 Drehen</button>
       <div class="slot-result" id="slotResult"></div>
     </div>
-    <div class="gluecksrad-card reveal">
-      <h3 style="font-family:var(--font-display);font-size:1.1rem;margin-bottom:1.2rem">🎡 Glücksrad</h3>
-      <div class="gluecksrad-wrap">
-        <div class="gluecksrad-pointer">▼</div>
-        <canvas id="gluecksradCanvas" width="240" height="240"></canvas>
-      </div>
-      <button class="btn btn-primary" onclick="spinGluecksrad()" style="margin-top:1.2rem">🎡 Drehen</button>
-      <div class="slot-result" id="gluecksradResult"></div>
-    </div>
   </div>
 </section>
 
-<footer><strong>Abi Vegas 2027 · Sportschule Halle</strong><br><span style="display:block;margin-top:.3rem">Mit ❤️ von der Klasse gebaut</span><span class="footer-suits">♠ ♥ ♦ ♣</span><span style="display:block;margin-top:1rem;font-size:.75rem"><a href="#" onclick="openModal('impressumModal');return false" style="color:var(--text-muted);text-decoration:underline">Impressum</a> &nbsp;·&nbsp; <a href="#" onclick="openModal('datenschutzModal');return false" style="color:var(--text-muted);text-decoration:underline">Datenschutz</a></span></footer>
+<footer><strong>Abi Vegas 2027 · Sportschule Halle</strong><br><span style="display:block;margin-top:.3rem">Mit ❤️ von der Klasse gebaut</span><span class="footer-suits">♠ ♥ ♦ ♣</span>
+  <div style="margin-top:1.1rem;font-size:.75rem;color:var(--text-muted)">Unsere Socials</div>
+  <div style="display:flex;justify-content:center;gap:1rem;margin-top:.5rem">
+    <a href="#" id="footerInstaLink" target="_blank" rel="noopener" aria-label="Instagram" style="color:var(--text-muted);display:inline-flex">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none"/></svg>
+    </a>
+    <a href="#" id="footerTiktokLink" target="_blank" rel="noopener" aria-label="TikTok" style="color:var(--text-muted);display:inline-flex">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.3c-.8-.7-1.3-1.7-1.4-2.8h-3v13.4a2.6 2.6 0 1 1-1.8-2.5v-3.1a5.6 5.6 0 1 0 4.8 5.5V9.2a6.9 6.9 0 0 0 4 1.3V7.5a4 4 0 0 1-2.6-1.2Z"/></svg>
+    </a>
+  </div>
+  <span style="display:block;margin-top:1rem;font-size:.75rem"><a href="#" onclick="openModal('impressumModal');return false" style="color:var(--text-muted);text-decoration:underline">Impressum</a> &nbsp;·&nbsp; <a href="#" onclick="openModal('datenschutzModal');return false" style="color:var(--text-muted);text-decoration:underline">Datenschutz</a></span>
+</footer>
 
 <!-- IMPRESSUM MODAL -->
 <div class="modal-overlay" id="impressumModal">
@@ -751,7 +767,12 @@ footer strong{color:var(--text)}
         </div>
         <form id="authForm" onsubmit="event.preventDefault();submitAuth()">
         <div class="form-field"><label>E-Mail</label><input type="email" id="authEmail" placeholder="du@sportschulen-halle.de" autocomplete="username"></div>
-        <div class="form-field"><label>Passwort</label><input type="password" id="authPw" placeholder="••••••••" autocomplete="current-password"></div>
+        <div class="form-field"><label>Passwort</label>
+          <div style="display:flex;gap:.5rem">
+            <input type="password" id="authPw" placeholder="••••••••" autocomplete="current-password" style="flex:1">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="togglePwVisibility('authPw',this)" style="white-space:nowrap">👁️ anzeigen</button>
+          </div>
+        </div>
         <div style="text-align:right;margin:-.7rem 0 1rem" id="forgotPwLinkWrap"><a href="#" onclick="showForgotPassword();return false" style="font-size:.78rem;color:var(--text-muted)">Passwort vergessen?</a></div>
         <div id="authHint" style="font-size:.78rem;color:var(--text-muted);margin:-.4rem 0 1rem;line-height:1.4"></div>
         <button class="btn btn-primary" type="submit" id="authSubmitBtn" style="width:100%;justify-content:center">Einloggen</button>
@@ -1262,6 +1283,7 @@ async function refreshAuthUI(){
   }
   renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
   if(document.getElementById('aktionenEntries'))renderAktionen();
+  if(document.getElementById('siteBannerWrap'))renderSiteBanner();
   updatePushToggleUI();
 }
 function goToMySteckbrief(){
@@ -1553,6 +1575,18 @@ function compressImage(file,maxDim,quality){
     reader.readAsDataURL(file);
   });
 }
+function removeProfilBild(){
+  if(!editDraft)return;
+  editDraft.profilBild='';
+  showToast('✓ Profilbild entfernt (nicht vergessen zu speichern)');
+  renderSteckbriefFullscreenBody();
+}
+function removeSportImg(field){
+  if(!editDraft)return;
+  editDraft[field]='';
+  showToast('✓ Bild entfernt (nicht vergessen zu speichern)');
+  renderSteckbriefFullscreenBody();
+}
 async function handleImageUpload(e,field,i){
   const file=e.target.files[0];
   if(!file)return;
@@ -1781,7 +1815,7 @@ function buildSchuelerEditForm(i){
     <div class="sm-top"><div class="sm-avatar" style="padding:0;overflow:hidden">${avatarPreview}</div>
       <div class="sm-info"><h2>${s.name}</h2><div style="font-size:.75rem;color:var(--text-muted);margin-top:.2rem">✏️ Du bearbeitest deinen Steckbrief</div></div>
     </div>
-    <div class="form-field"><label>Profilbild</label><input type="file" accept="image/*" id="editProfilBildInput"></div>
+    <div class="form-field"><label>Profilbild</label><input type="file" accept="image/*" id="editProfilBildInput">${d.profilBild?'<button type="button" class="btn btn-ghost btn-sm" style="margin-top:.5rem" onclick="removeProfilBild()">🗑️ Profilbild entfernen</button>':''}</div>
     <div class="form-field"><label>Spitzname</label><input type="text" id="editNick" value="${escAttr(d.nick)}" placeholder="Spitzname"></div>
     <div class="form-field">
       <label>Motto</label>
@@ -1813,8 +1847,8 @@ function buildSchuelerEditForm(i){
     </div>
     <div class="form-field"><label>Facts (mit Komma trennen, max. 6)</label><input type="text" id="editFacts" value="${escAttr(d.facts.join(', '))}" placeholder="🎹 Klavier, 🎧 DJ, 😴 Langschläfer"></div>
     <div class="sm-images">
-      <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 1</label><input type="file" accept="image/*" id="editImg1Input"></div><input type="text" id="editImg1Label" value="${escAttr(d.sportImg1Label==='Bild 1'?'':d.sportImg1Label)}" placeholder="Bildunterschrift (z.B. 'Beim Training')" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
-      <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 2</label><input type="file" accept="image/*" id="editImg2Input"></div><input type="text" id="editImg2Label" value="${escAttr(d.sportImg2Label==='Bild 2'?'':d.sportImg2Label)}" placeholder="Bildunterschrift (z.B. 'Nach dem Wettkampf')" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
+      <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 1</label><input type="file" accept="image/*" id="editImg1Input">${d.sportImg1?'<button type="button" class="btn btn-ghost btn-sm" style="margin-top:.4rem" onclick="removeSportImg(\'sportImg1\')">🗑️ Entfernen</button>':''}</div><input type="text" id="editImg1Label" value="${escAttr(d.sportImg1Label==='Bild 1'?'':d.sportImg1Label)}" placeholder="Bildunterschrift (z.B. 'Beim Training')" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
+      <div><div class="form-field" style="margin-bottom:.5rem"><label>Bild 2</label><input type="file" accept="image/*" id="editImg2Input">${d.sportImg2?'<button type="button" class="btn btn-ghost btn-sm" style="margin-top:.4rem" onclick="removeSportImg(\'sportImg2\')">🗑️ Entfernen</button>':''}</div><input type="text" id="editImg2Label" value="${escAttr(d.sportImg2Label==='Bild 2'?'':d.sportImg2Label)}" placeholder="Bildunterschrift (z.B. 'Nach dem Wettkampf')" style="width:100%;padding:.6rem .8rem;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg);color:var(--text)"></div>
     </div>
     <div style="display:flex;gap:.6rem;margin-top:1.2rem">
       <button class="btn btn-primary" id="saveSteckbriefBtn" style="flex:1;justify-content:center" onclick="saveSteckbrief(${i})">✓ Speichern</button>
@@ -2004,54 +2038,6 @@ function spinSlot(){
       if(win)showToast('Jackpot! 🎰');
     }
   },80);
-}
-
-// ── GLÜCKSRAD ──
-const GLUECKSRAD_SEGMENTE=[
-  {text:'☕ Kaffee spendiert',color:'#4A90D9'},
-  {text:'🕺 Tanzpflicht',color:'#D94A7E'},
-  {text:'📸 Foto-Pflicht',color:'#4AD96D'},
-  {text:'🤷 Nochmal drehen',color:'#D9814A'},
-  {text:'🎉 Doppelt Glück',color:'#9B4AD9'},
-  {text:'😴 Traum-frei',color:'#D94A4A'},
-  {text:'🥳 Bester Tag',color:'#4AC4D9'},
-  {text:'🍕 Pizza (imaginär)',color:'#D9C44A'}
-];
-let gluecksradRotation=0,gluecksradSpinning=false;
-function drawGluecksrad(){
-  const cv=document.getElementById('gluecksradCanvas');
-  if(!cv)return;
-  const ctx=cv.getContext('2d');
-  const n=GLUECKSRAD_SEGMENTE.length,r=118,cx=120,cy=120,slice=2*Math.PI/n;
-  ctx.clearRect(0,0,240,240);
-  GLUECKSRAD_SEGMENTE.forEach((seg,i)=>{
-    const start=i*slice,end=start+slice;
-    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,end);ctx.closePath();
-    ctx.fillStyle=seg.color;ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;ctx.stroke();
-    ctx.save();
-    ctx.translate(cx,cy);ctx.rotate(start+slice/2);
-    ctx.textAlign='right';ctx.fillStyle='#fff';ctx.font='600 10px Poppins, sans-serif';
-    ctx.fillText(seg.text,r-10,4);
-    ctx.restore();
-  });
-}
-function spinGluecksrad(){
-  if(gluecksradSpinning)return;
-  gluecksradSpinning=true;
-  const n=GLUECKSRAD_SEGMENTE.length,slice=360/n;
-  const targetIdx=Math.floor(Math.random()*n);
-  const jitter=(Math.random()*slice*0.6-slice*0.3);
-  const targetAngle=5*360+(360-(targetIdx*slice+slice/2))+jitter;
-  gluecksradRotation+=targetAngle;
-  const cv=document.getElementById('gluecksradCanvas');
-  cv.style.transform=`rotate(${gluecksradRotation}deg)`;
-  const resultEl=document.getElementById('gluecksradResult');
-  resultEl.textContent='';
-  setTimeout(()=>{
-    resultEl.textContent='🎡 '+GLUECKSRAD_SEGMENTE[targetIdx].text;
-    gluecksradSpinning=false;
-  },3700);
 }
 
 // ── VORBESTELLUNG (Sammelkarten nächstes Jahr) ──
@@ -2345,6 +2331,65 @@ async function addGbEntry(){
   showToast('Eintrag hinzugefügt ✓');
 }
 
+// ── SITE BANNER (Werbung/Ankündigung) ──
+let siteBannerData=null;
+async function loadSiteBanner(){
+  const{data,error}=await sb.from('site_banner').select('*').eq('id',1).single();
+  if(error){console.warn('Banner-Laden fehlgeschlagen:',error);return;}
+  siteBannerData=data;
+}
+function renderSiteBanner(){
+  const wrap=document.getElementById('siteBannerWrap');
+  const img=document.getElementById('siteBannerImg');
+  const link=document.getElementById('siteBannerLink');
+  const adminPanel=document.querySelector('#aktionen .admin-panel');
+  if(adminPanel)adminPanel.style.display=(currentUser&&currentUser.email==='juliusulrich@t-online.de')?'block':'none';
+  if(!wrap||!img||!link)return;
+  if(siteBannerData&&siteBannerData.image_url){
+    img.src=siteBannerData.image_url;
+    link.href=siteBannerData.link_url||'#';
+    link.style.pointerEvents=siteBannerData.link_url?'auto':'none';
+    wrap.style.display='block';
+  }else{
+    wrap.style.display='none';
+  }
+  const linkInput=document.getElementById('bannerLinkInput');
+  if(linkInput&&siteBannerData)linkInput.value=siteBannerData.link_url||'';
+}
+async function uploadSiteBanner(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  if(!currentUser||currentUser.email!=='juliusulrich@t-online.de'){showToast('❌ Nur Admin kann das Banner ändern');return;}
+  if(!file.type.startsWith('image/')){showToast('❌ Bitte ein Bild auswählen');return;}
+  try{
+    const compressed=await compressImage(file,1600,.85);
+    const path=`banner-${Date.now()}.jpg`;
+    const{error:upErr}=await sb.storage.from('banner-images').upload(path,compressed,{contentType:'image/jpeg',upsert:true});
+    if(upErr){showToast('❌ '+upErr.message);return;}
+    const{data:urlData}=sb.storage.from('banner-images').getPublicUrl(path);
+    const{error:dbErr}=await sb.from('site_banner').update({image_url:urlData.publicUrl,updated_at:new Date().toISOString()}).eq('id',1);
+    if(dbErr){showToast('❌ '+dbErr.message);return;}
+    await loadSiteBanner();renderSiteBanner();
+    showToast('✓ Banner aktualisiert');
+  }catch(err){showToast('❌ Fehler beim Hochladen');console.error(err);}
+}
+async function saveBannerLink(){
+  if(!currentUser||currentUser.email!=='juliusulrich@t-online.de'){showToast('❌ Nur Admin');return;}
+  const link=document.getElementById('bannerLinkInput').value.trim();
+  const{error}=await sb.from('site_banner').update({link_url:link||null}).eq('id',1);
+  if(error){showToast('❌ '+error.message);return;}
+  await loadSiteBanner();renderSiteBanner();
+  showToast('✓ Link gespeichert');
+}
+async function removeSiteBanner(){
+  if(!currentUser||currentUser.email!=='juliusulrich@t-online.de'){showToast('❌ Nur Admin');return;}
+  if(!confirm('Banner wirklich entfernen?'))return;
+  const{error}=await sb.from('site_banner').update({image_url:null,link_url:null}).eq('id',1);
+  if(error){showToast('❌ '+error.message);return;}
+  await loadSiteBanner();renderSiteBanner();
+  showToast('✓ Banner entfernt');
+}
+
 // ── AKTIONEN ──
 let aktionenList=[];
 async function loadAktionenFromDb(){
@@ -2616,7 +2661,14 @@ window.addEventListener('scroll',()=>{
 },{passive:true});
 
 // ── INIT ──
+// ── SOCIAL MEDIA LINKS (hier eintragen, sobald Accountnamen feststehen) ──
+const SOCIAL_INSTAGRAM_URL='#'; // z.B. 'https://instagram.com/abivegas2027'
+const SOCIAL_TIKTOK_URL='#';    // z.B. 'https://tiktok.com/@abivegas2027'
+
 document.addEventListener('DOMContentLoaded',()=>{
+  const igLink=document.getElementById('footerInstaLink'),ttLink=document.getElementById('footerTiktokLink');
+  if(igLink)igLink.href=SOCIAL_INSTAGRAM_URL;
+  if(ttLink)ttLink.href=SOCIAL_TIKTOK_URL;
   registerServiceWorker().finally(()=>updatePushToggleUI());
   checkA2hsBanner();
   const savedTheme=localStorage.getItem('theme');
@@ -2627,8 +2679,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('themeBtn').textContent='☀️';
   }
   loadGalerieKategorienFromDb().finally(()=>{
-    Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb(),loadGalerieFromDb(),loadAktionenFromDb()]).finally(()=>{
-      initSchueler();initSammelkarten();initGalerie();renderGb();renderAktionen();updateKasseUI();drawGluecksrad();
+    Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb(),loadGalerieFromDb(),loadAktionenFromDb(),loadSiteBanner()]).finally(()=>{
+      initSchueler();initSammelkarten();initGalerie();renderGb();renderAktionen();renderSiteBanner();updateKasseUI();
       refreshAuthUI();
       setTimeout(()=>{document.getElementById('kasseBar').style.width=Math.min(100,Math.round(kasseValue/KASSE_GOAL*100))+'%';},800);
     });
