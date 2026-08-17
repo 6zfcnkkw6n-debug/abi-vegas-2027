@@ -316,8 +316,9 @@ body.admin-mode .gb-delete-btn{display:inline-block}
 .modal-body{padding:1.5rem 2rem 2rem}
 .form-field{margin-bottom:1rem}
 .form-field label{display:block;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.4rem;font-weight:500}
-.form-field input,.form-field textarea{width:100%;padding:.7rem .9rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-family:var(--font-body);font-size:16px;color:var(--text);transition:border-color .2s;outline:none;resize:vertical}
+.form-field input:not([type=checkbox]),.form-field textarea{width:100%;padding:.7rem .9rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-family:var(--font-body);font-size:16px;color:var(--text);transition:border-color .2s;outline:none;resize:vertical}
 .form-field input:focus,.form-field textarea:focus{border-color:var(--accent)}
+.form-field input[type=checkbox]{width:18px;height:18px;flex-shrink:0;margin:0}
 /* ADMIN PANEL */
 .admin-panel{display:none;position:fixed;bottom:1.5rem;right:1.5rem;z-index:400;background:var(--bg-card);border:2px solid var(--accent);border-radius:var(--radius);padding:1.2rem;box-shadow:var(--shadow-h);width:220px}
 body.admin-mode .admin-panel{display:block}
