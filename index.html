@@ -404,11 +404,6 @@ footer strong{color:var(--text)}
   </div>
 </nav>
 
-<div id="a2hsBanner" style="display:none;position:sticky;top:0;z-index:150;background:var(--bg-card);border-bottom:1px solid var(--border);padding:.55rem 1rem;font-size:.78rem;color:var(--text-muted);text-align:center">
-  📲 Für Benachrichtigungen: Teilen-Symbol → <strong>"Zum Home-Bildschirm"</strong> → Seite von dort öffnen
-  <button onclick="dismissA2hsBanner()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;margin-left:.6rem;vertical-align:middle">✕</button>
-</div>
-
 <div class="modal-overlay" id="mottoReminderModal">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
@@ -1481,7 +1476,9 @@ function initSchueler(){
       if(smTicking)return;
       smTicking=true;
       requestAnimationFrame(()=>{
-        modalBox.classList.toggle('sm-scrolled',modalBody.scrollTop>16);
+        const isScrolled=modalBox.classList.contains('sm-scrolled');
+        if(!isScrolled&&modalBody.scrollTop>40){modalBox.classList.add('sm-scrolled');}
+        else if(isScrolled&&modalBody.scrollTop<10){modalBox.classList.remove('sm-scrolled');}
         smTicking=false;
       });
     },{passive:true});
@@ -2712,17 +2709,7 @@ async function togglePushNotifications(){
   }
   updatePushToggleUI();
 }
-function checkA2hsBanner(){
-  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
-  const isStandalone=window.navigator.standalone||window.matchMedia('(display-mode: standalone)').matches;
-  if(isIOS&&!isStandalone&&!localStorage.getItem('a2hsDismissed')){
-    document.getElementById('a2hsBanner').style.display='block';
-  }
-}
-function dismissA2hsBanner(){
-  document.getElementById('a2hsBanner').style.display='none';
-  localStorage.setItem('a2hsDismissed','1');
-}
+
 
 // ── COUNTDOWN ──
 function updateCountdowns(){
@@ -2900,7 +2887,6 @@ function openSocialApp(e,appUrl,webUrl){
 
 document.addEventListener('DOMContentLoaded',()=>{
   registerServiceWorker().finally(()=>updatePushToggleUI());
-  checkA2hsBanner();
   const savedTheme=localStorage.getItem('theme');
   const wantDark=savedTheme?savedTheme==='dark':(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
   if(wantDark){
