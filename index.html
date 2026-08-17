@@ -527,6 +527,7 @@ footer strong{color:var(--text)}
         <input type="number" class="ks-input" id="ksInput3" value="0" min="0" style="display:none;width:100%;padding:.4rem .6rem;border:1px solid var(--accent);border-radius:6px;font-family:var(--font-body);font-size:16px;background:var(--bg);color:var(--text);outline:none;margin-top:.3rem" oninput="updateKasseSource()">
       </div>
     </div>
+    <button class="btn btn-ghost btn-sm" id="kasseEditBtn" style="width:100%;margin-top:1rem;display:none" onclick="toggleKasseEdit()"><span id="kasseEditToggleBtn">✏️ Abikasse bearbeiten</span></button>
   </div>
   <div class="donation-card reveal">
     <div style="font-size:3rem">🎰</div>
@@ -934,8 +935,7 @@ footer strong{color:var(--text)}
 <!-- ADMIN PANEL -->
 <div class="admin-panel">
   <h4>⚙ Admin aktiv</h4>
-  <button class="btn btn-ghost btn-sm" style="width:100%" onclick="toggleKasseEdit()"><span id="kasseEditToggleBtn">✏️ Abikasse bearbeiten</span></button>
-  <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:.5rem" onclick="exitAdmin()">Admin verlassen</button>
+  <button class="btn btn-ghost btn-sm" style="width:100%" onclick="exitAdmin()">Admin verlassen</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1332,6 +1332,11 @@ async function refreshAuthUI(){
   }
   renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
   if(document.getElementById('aktionenEntries'))renderAktionen();
+  const kasseEditBtn=document.getElementById('kasseEditBtn');
+  if(kasseEditBtn){
+    kasseEditBtn.style.display=currentUser?'block':'none';
+    if(!currentUser&&kasseEditMode)toggleKasseEdit();
+  }
   updatePushToggleUI();
 }
 function goToMySteckbrief(){
