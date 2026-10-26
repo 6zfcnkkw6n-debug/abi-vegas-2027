@@ -98,11 +98,6 @@ section{padding:6rem 3rem;max-width:1200px;margin:0 auto}
 .donation-left p{font-size:.88rem;color:rgba(255,255,255,.6);max-width:380px;line-height:1.6}
 .btn-donation{background:var(--accent);color:#fff;font-size:.85rem;padding:.8rem 2rem;border-radius:8px;text-decoration:none;font-family:var(--font-body);font-weight:600;letter-spacing:.06em;text-transform:uppercase;transition:all .2s;display:inline-block}
 /* SCHÜLER */
-.login-gate{display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:2.5rem 2rem;box-shadow:var(--shadow);text-align:center}
-.login-gate-icon{font-size:2rem;margin-bottom:.6rem}
-.login-gate p{color:var(--text-muted);font-size:.9rem;margin:.4rem 0 1.2rem}
-body.logged-out .login-gate{display:block}
-body.logged-out .gate-content{display:none!important}
 .schueler-teaser{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:3rem 2.5rem;box-shadow:var(--shadow);text-align:center;position:relative;overflow:hidden;transition:background-color .4s ease,border-color .4s ease}
 .schueler-teaser::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent-dark),var(--accent),var(--accent-dark))}
 .schueler-teaser-avatars{display:flex;justify-content:center;margin-bottom:1.7rem;gap:-8px}
@@ -412,7 +407,7 @@ footer strong{color:var(--text)}
 }
 </style>
 </head>
-<body class="logged-out">
+<body>
 
 <nav id="navbar">
   <a class="nav-logo" href="#hero" id="navLogo" onmousedown="startLogoHold(event)" ontouchstart="startLogoHold(event)" onmouseup="endLogoHold()" onmouseleave="endLogoHold()" ontouchend="endLogoHold()" ontouchcancel="endLogoHold()" onclick="handleLogoClick(event)"><span style="opacity:.5">♠</span>Abi <span>2027</span></a>
@@ -569,8 +564,7 @@ footer strong{color:var(--text)}
   <p class="section-label reveal">Was steht an</p>
   <h2 class="section-title reveal">Aktionen</h2>
   <p class="section-desc reveal">Kuchenbasar, Grillbasar, Disco & Co. – alle eingeloggten können Termine eintragen. Läuft ein Termin ab, verschwindet er automatisch.</p>
-  <div class="login-gate"><div class="login-gate-icon">🔒</div><strong>Nur für den Jahrgang</strong><p>Unsere Aktionen sind nur für eingeloggte Jahrgangsmitglieder sichtbar.</p><button class="btn btn-primary" onclick="openModal('accountModal')">Einloggen</button></div>
-  <div class="aktionen-layout gate-content">
+  <div class="aktionen-layout">
     <div>
       <div class="gaestebuch-entries" id="aktionenEntries"></div>
       <div id="aktionenTrashWrap" style="display:none"></div>
@@ -615,8 +609,7 @@ footer strong{color:var(--text)}
 <section id="schueler">
   <p class="section-label reveal">Die Klasse</p>
   <h2 class="section-title reveal">Schüler-Steckbriefe</h2>
-  <div class="login-gate"><div class="login-gate-icon">🔒</div><strong>Nur für den Jahrgang</strong><p>Die Steckbriefe sind nur für eingeloggte Jahrgangsmitglieder sichtbar.</p><button class="btn btn-primary" onclick="openModal('accountModal')">Einloggen</button></div>
-  <div class="schueler-teaser reveal gate-content" id="schuelerTeaser">
+  <div class="schueler-teaser reveal" id="schuelerTeaser">
     <div class="schueler-teaser-avatars" id="teaserAvatars"></div>
     <div class="schueler-teaser-quote">Unser Jahrgang.</div>
     <div class="schueler-teaser-sub">Wer ist wer – hier lang.</div>
@@ -668,8 +661,7 @@ footer strong{color:var(--text)}
       <button class="btn btn-primary btn-sm" onclick="addGalerieKategorie()">+ Hinzufügen</button>
     </div>
   </div>
-  <div class="login-gate"><div class="login-gate-icon">🔒</div><strong>Nur für den Jahrgang</strong><p>Die Fotos sind nur für eingeloggte Jahrgangsmitglieder sichtbar.</p><button class="btn btn-primary" onclick="openModal('accountModal')">Einloggen</button></div>
-  <div class="galerie-grid gate-content" id="galerieGrid"></div>
+  <div class="galerie-grid" id="galerieGrid"></div>
 </section>
 <hr class="sep">
 
@@ -1020,7 +1012,7 @@ const PRUEFUNGEN=[
   {emoji:'🏃',fach:'Sport (Prakt.)', datum:'2027-05-20T08:00:00'},
 ];
 
-// ✏️ SCHÜLER – nur Platzhalter (Fallback). Echte Steckbriefe kommen nach dem Login aus Supabase – hier keine echten Daten eintragen!
+// ✏️ SCHÜLER – nur Platzhalter (Fallback, falls Supabase nicht erreichbar ist). Echte Steckbriefe kommen aus Supabase – hier keine echten Daten eintragen!
 let SCHUELER=[
   {name:'Vorname Nachname',nick:'Spitzname', motto:'"Motto hier."',sport:'🏃 Sportart',farbe:'#4A90D9',profilBild:'',bio:'Beschreibung folgt.',facts:['🏆 Fakt 1','🎯 Fakt 2','😄 Fakt 3'],sportImg1:'',sportImg1Label:'Bild 1',sportImg2:'',sportImg2Label:'Bild 2'},
   {name:'Vorname Nachname',nick:'Spitzname', motto:'"Motto hier."',sport:'🏊 Sportart',farbe:'#D94A7E',profilBild:'',bio:'Beschreibung folgt.',facts:['🏆 Fakt 1','🎯 Fakt 2','😄 Fakt 3'],sportImg1:'',sportImg1Label:'Bild 1',sportImg2:'',sportImg2Label:'Bild 2'},
@@ -1065,8 +1057,6 @@ let SCHUELER=[
   {name:'Vorname Nachname',nick:'Spitzname', motto:'"Motto hier."',sport:'🎳 Sportart',farbe:'#A6965B',profilBild:'',bio:'Beschreibung folgt.',facts:['🏆 Fakt 1','🎯 Fakt 2','😄 Fakt 3'],sportImg1:'',sportImg1Label:'Bild 1',sportImg2:'',sportImg2Label:'Bild 2'},
   {name:'Vorname Nachname',nick:'Spitzname', motto:'"Motto hier."',sport:'🥏 Sportart',farbe:'#6B5BA6',profilBild:'',bio:'Beschreibung folgt.',facts:['🏆 Fakt 1','🎯 Fakt 2','😄 Fakt 3'],sportImg1:'',sportImg1Label:'Bild 1',sportImg2:'',sportImg2Label:'Bild 2'},
 ];
-
-const SCHUELER_FALLBACK=SCHUELER.slice();
 
 // ✏️ LEHRER-SAMMELKARTEN (Prototyp – nur erfundene Platzhalter-Namen, keine echten Lehrer; echte Karten erst mit deren Zustimmung)
 const LEHRERKARTEN=[
@@ -1371,7 +1361,6 @@ async function refreshAuthUI(){
   if(__invitePasswordFormActive){console.log('[DEBUG] refreshAuthUI blockiert - Passwort-Formular ist aktiv');return;}
   const{data}=await sb.auth.getSession();
   currentUser=data&&data.session?data.session.user:null;
-  document.body.classList.toggle('logged-out',!currentUser);
   await loadAdminRole();
   const btn=document.getElementById('accountBtn');
   const out=document.getElementById('accountLoggedOut'),into=document.getElementById('accountLoggedIn');
@@ -1395,28 +1384,6 @@ async function refreshAuthUI(){
     if(!currentUser&&kasseEditMode)toggleKasseEdit();
   }
   updatePushToggleUI();
-  reloadMemberData();
-}
-// Steckbriefe, Galerie-Fotos und Aktionen sind per Supabase-RLS nur fuer den Jahrgang lesbar.
-// Bei Login/Logout neu laden, damit man nach dem Einloggen ohne Neuladen alles sieht.
-let initDone=false,memberDataUserId;
-async function reloadMemberData(){
-  if(!initDone)return;
-  const uid=currentUser?currentUser.id:null;
-  if(uid===memberDataUserId)return;
-  memberDataUserId=uid;
-  if(uid){
-    await Promise.all([loadSchuelerFromDb(),loadGalerieFromDb(),loadAktionenFromDb()]);
-  }else{
-    SCHUELER=SCHUELER_FALLBACK.slice();
-    GALERIE_KATEGORIEN.forEach(k=>{k.photos=[];});
-    aktionenList=[];aktionenTrash=[];
-    closeModal('schuelerListModal');closeSteckbriefFullscreen();closeGalleryLightbox();
-  }
-  renderTeaserAvatars();
-  renderSchuelerGrid(document.getElementById('schuelerSearch')?document.getElementById('schuelerSearch').value:'');
-  document.getElementById('galerieGrid').innerHTML='';initGalerie();
-  renderAktionen();
 }
 function goToMySteckbrief(){
   closeModal('accountModal');
@@ -3006,9 +2973,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('themeBtn').textContent='☀️';
   }
   loadGalerieKategorienFromDb().finally(()=>{
-    Promise.all([loadGaestebuchFromDb(),loadKasseFromDb()]).finally(()=>{
+    Promise.all([loadSchuelerFromDb(),loadGaestebuchFromDb(),loadKasseFromDb(),loadGalerieFromDb(),loadAktionenFromDb()]).finally(()=>{
       initSchueler();initSammelkarten();initGalerie();renderGb();renderAktionen();updateKasseUI();
-      initDone=true;
       refreshAuthUI();
       setTimeout(()=>{document.getElementById('kasseBar').style.width=Math.min(100,Math.round(kasseValue/KASSE_GOAL*100))+'%';},800);
     });
