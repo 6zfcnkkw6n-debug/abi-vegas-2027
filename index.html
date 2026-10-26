@@ -776,16 +776,6 @@ footer strong{color:var(--text)}
 </div>
 
 <!-- ADMIN LOGIN MODAL -->
-<div class="modal-overlay" id="adminModal">
-  <div class="modal" style="max-width:360px">
-    <div class="modal-header"><div class="modal-title">Admin-Modus</div><div class="modal-sub">Abikasse verwalten</div><button class="modal-close" onclick="closeModal('adminModal')">✕</button></div>
-    <div class="modal-body">
-      <div class="form-field"><label>Passwort</label><input type="password" id="adminPw" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAdminPw()"></div>
-      <button class="btn btn-primary" onclick="checkAdminPw()" style="width:100%;justify-content:center">Einloggen</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-overlay" id="accountModal">
   <div class="modal" style="max-width:400px">
     <div class="modal-header"><div class="modal-title" id="accountModalTitle">Mein Login</div><div class="modal-sub" id="accountModalSub">Für deinen eigenen Steckbrief</div><button class="modal-close" onclick="closeModal('accountModal')">✕</button></div>
@@ -1327,6 +1317,7 @@ async function refreshAuthUI(){
   const{data}=await sb.auth.getSession();
   currentUser=data&&data.session?data.session.user:null;
   document.body.classList.toggle('logged-out',!currentUser);
+  await loadAdminRole();
   const btn=document.getElementById('accountBtn');
   const out=document.getElementById('accountLoggedOut'),into=document.getElementById('accountLoggedIn');
   document.getElementById('accountSetNewPw').style.display='none';
@@ -1441,15 +1432,20 @@ function renderPruefungen(){
 }
 
 // ── ADMIN ──
-function toggleAdmin(){if(adminMode)exitAdmin();else openModal('adminModal');}
-function checkAdminPw(){
-  if(document.getElementById('adminPw').value==='Jackpot'){
-    closeModal('adminModal');
-    document.body.classList.add('admin-mode');
-    const btn=document.getElementById('adminBtn');if(btn)btn.classList.add('active');
-    adminMode=true;showToast('Admin-Modus aktiv ✓');
-  }else showToast('❌ Falsches Passwort');
-  document.getElementById('adminPw').value='';
+let isAdminUser=false;
+async function loadAdminRole(){
+  isAdminUser=false;
+  if(currentUser){
+    try{const{data}=await sb.rpc('ist_admin');isAdminUser=data===true;}catch(e){}
+  }
+  if(!isAdminUser&&adminMode)exitAdmin();
+}
+function toggleAdmin(){
+  if(adminMode){exitAdmin();return;}
+  if(!isAdminUser){showToast(currentUser?'🔒 Nur für Admins':'🔒 Bitte erst einloggen');return;}
+  document.body.classList.add('admin-mode');
+  const btn=document.getElementById('adminBtn');if(btn)btn.classList.add('active');
+  adminMode=true;showToast('Admin-Modus aktiv ✓');
 }
 function exitAdmin(){
   document.body.classList.remove('admin-mode');
@@ -2373,8 +2369,7 @@ function renderGalleryLb(){
   const uploadBtn=document.getElementById('galleryUploadBtn');
   if(uploadBtn)uploadBtn.style.display=currentUser?'inline-flex':'none';
   const deleteBtn=document.getElementById('galleryDeleteBtn');
-  const isAdmin=currentUser&&currentUser.email==='juliusulrich@t-online.de';
-  if(deleteBtn)deleteBtn.style.display=(isAdmin&&!isFiller)?'inline-flex':'none';
+  if(deleteBtn)deleteBtn.style.display=(isAdminUser&&!isFiller)?'inline-flex':'none';
   document.getElementById('slideshowBtn').style.display=list.length>1?'inline-flex':'none';
   const photo=list[galleryCurrentIdx]||list[0];
   if(photo.src){const img=document.createElement('img');img.src=photo.src;img.alt=photo.caption||'';wrap.appendChild(img);}
