@@ -185,13 +185,28 @@ body.logged-out .gate-content{display:none!important}
 .pf-ampel.green{background:var(--green)}.pf-ampel.yellow{background:#D9C44A}.pf-ampel.red{background:var(--red)}
 /* SAMMELKARTEN */
 .karten-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1.2rem}
+.karten-filter-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.7rem;margin:.2rem 0 .6rem}
+.karten-fach-select{padding:.45rem .8rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:16px;outline:none}
+.karten-empty{display:none;text-align:center;color:var(--text-muted);font-size:.9rem;padding:2rem 0}
+/* KARTEN-PACK (Teaser) */
+.pack-teaser{display:flex;align-items:center;gap:2rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.6rem 2rem;box-shadow:var(--shadow);transition:background-color .4s ease,border-color .4s ease}
+.pack-teaser h3{font-family:var(--font-display);font-size:1.3rem;margin-bottom:.35rem}
+.pack-teaser p{font-size:.88rem;color:var(--text-muted);line-height:1.6;margin-bottom:1rem;max-width:420px}
+.pack{position:relative;flex:none;width:96px;aspect-ratio:5/7;cursor:pointer;border:none;background:none;padding:0;animation:packFloat 3.2s ease-in-out infinite}
+.pack-body{position:absolute;inset:0;border-radius:10px;border:1px solid rgba(244,197,66,.55);box-shadow:var(--shadow-h);display:flex;align-items:center;justify-content:center;font-size:2.3rem;
+  background:repeating-linear-gradient(45deg,rgba(244,197,66,.14) 0 2px,transparent 2px 18px),repeating-linear-gradient(-45deg,rgba(244,197,66,.14) 0 2px,transparent 2px 18px),radial-gradient(ellipse at center,#7a1c33,#3a0d18 78%)}
+.pack-flap{position:absolute;left:-2px;right:-2px;top:-3px;height:17%;border-radius:10px 10px 2px 2px;background:linear-gradient(#a8294a,#7a1c33);border-bottom:2px dashed rgba(244,197,66,.7);transform-origin:top left;z-index:2}
+.pack.opening{animation:packShake .5s ease}
+.pack.opening .pack-flap{transition:transform .45s ease .2s,opacity .3s ease .45s;transform:translateY(-16px) rotate(-22deg);opacity:0}
+@keyframes packFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(2deg)}}
+@keyframes packShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-6deg) scale(1.05)}40%{transform:rotate(6deg) scale(1.05)}60%{transform:rotate(-4deg) scale(1.08)}80%{transform:rotate(3deg) scale(1.08)}}
+.karten-grid.deal .karte-slot{animation:dealIn .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*45ms)}
+@keyframes dealIn{from{opacity:0;transform:translateY(28px) scale(.88) rotate(-4deg)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pack,.pack.opening,.karten-grid.deal .karte-slot{animation:none}.pack.opening .pack-flap{transition:none}}
+@media (max-width:560px){.pack-teaser{flex-direction:column;text-align:center;padding:1.5rem}.pack-teaser p{margin-left:auto;margin-right:auto}}
 .karten-legend{display:flex;gap:.5rem;flex-wrap:wrap}
 .karten-legend span{font-size:.72rem;font-weight:700;letter-spacing:.04em;padding:.32rem .85rem;border-radius:20px;cursor:pointer;border:2px solid transparent;transition:all .2s;opacity:.5}
 .karten-legend span.active{opacity:1;border-color:currentColor}
-.karten-progress{display:flex;align-items:center;gap:.9rem;margin-bottom:1.8rem}
-.karten-progress-bar-wrap{flex:1;height:6px;background:var(--accent-light);border-radius:3px;overflow:hidden}
-.karten-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent-dark),var(--accent));width:0;transition:width .6s ease}
-#kartenProgressLabel{font-size:.75rem;color:var(--text-muted);white-space:nowrap;font-weight:500}
 .karten-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1rem}
 .karte-slot{aspect-ratio:5/7;cursor:pointer;perspective:900px}
 .karte-inner{position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d}
@@ -607,12 +622,14 @@ footer strong{color:var(--text)}
 <section id="sammelkarten">
   <p class="section-label reveal">Prototyp · In Planung</p>
   <h2 class="section-title reveal">Lehrer-Sammelkarten</h2>
-  <p class="section-desc reveal">Übersicht, welche Karten unserer Lehrer es später geben wird – Kooperation & Design noch nicht final. Tippe eine Karte an zum Aufdecken, nochmal antippen zum Reinzoomen. 🎴</p>
-  <div class="karten-toolbar reveal">
-    <div class="karten-legend" id="kartenLegend"></div>
+  <div class="pack-teaser reveal">
+    <button class="pack" id="kartenPack" onclick="openKartenOverview()" aria-label="Kartenübersicht öffnen"><span class="pack-body">🎴</span><span class="pack-flap"></span></button>
+    <div>
+      <h3>Alle Karten auf einen Blick</h3>
+      <p>Welche Lehrer-Karten es später gibt, nach Seltenheit und Fach sortiert und durchsuchbar. Tipp aufs Pack. Kooperation &amp; Design sind noch nicht final.</p>
+      <button class="btn btn-primary" onclick="openKartenOverview()" style="font-size:.9rem;padding:.8rem 1.8rem">Pack öffnen</button>
+    </div>
   </div>
-  <div class="karten-progress reveal"><div class="karten-progress-bar-wrap"><div class="karten-progress-bar" id="kartenProgressBar"></div></div><span id="kartenProgressLabel"></span></div>
-  <div class="karten-grid" id="kartenGrid"></div>
 
   <div class="vorbestell-box reveal">
     <h3 class="vorbestell-title">🔮 Interesse für nächstes Jahr anmelden</h3>
@@ -893,6 +910,28 @@ footer strong{color:var(--text)}
   </div>
 </div>
 
+<div class="modal-overlay" id="kartenModal">
+  <div class="modal" style="max-width:900px">
+    <div class="modal-header">
+      <div class="modal-title">🎴 Lehrer-Sammelkarten</div>
+      <div class="modal-sub">Alle Karten im Überblick · Antippen zum Vergrößern und Umdrehen</div>
+      <button class="modal-close" onclick="closeModal('kartenModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="schueler-modal-search">
+        <span class="schueler-modal-search-icon">🔍</span>
+        <input type="text" id="kartenSearch" placeholder="Lehrer oder Fach suchen..." oninput="renderKartenGrid()">
+      </div>
+      <div class="karten-filter-row">
+        <div class="karten-legend" id="kartenLegend"></div>
+        <select id="kartenFach" class="karten-fach-select" onchange="renderKartenGrid()" aria-label="Fach wählen"><option value="">Alle Fächer</option></select>
+      </div>
+      <div class="schueler-modal-count" id="kartenCount"></div>
+      <div class="karten-grid" id="kartenGrid"></div>
+      <div class="karten-empty" id="kartenEmpty">Keine Karte gefunden. Probier einen anderen Filter. 🔎</div>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="karteModal">
   <div class="modal" style="max-width:400px">
     <div class="modal-header"><div class="modal-title">🎴 Sammelkarte</div><div class="modal-sub">Antippen oder wischen zum Umdrehen</div><button class="modal-close" onclick="closeModal('karteModal')">✕</button></div>
@@ -1021,13 +1060,22 @@ let SCHUELER=[
 
 const SCHUELER_FALLBACK=SCHUELER.slice();
 
-// ✏️ LEHRER-SAMMELKARTEN (Prototyp – Platzhalter, Kooperation noch nicht final)
+// ✏️ LEHRER-SAMMELKARTEN (Prototyp – nur erfundene Platzhalter-Namen, keine echten Lehrer; echte Karten erst mit deren Zustimmung)
 const LEHRERKARTEN=[
-  {name:'Lehrer Platzhalter',fach:'Sport',emoji:'🏃',rarity:'common'},
-  {name:'Lehrer Platzhalter',fach:'Mathematik',emoji:'🔢',rarity:'common'},
-  {name:'Lehrer Platzhalter',fach:'Deutsch',emoji:'📖',rarity:'rare'},
-  {name:'Lehrer Platzhalter',fach:'Chemie',emoji:'⚗️',rarity:'rare'},
+  {name:'Herr Mustermann',fach:'Mathematik',emoji:'🔢',rarity:'common'},
+  {name:'Frau Musterfrau',fach:'Deutsch',emoji:'📖',rarity:'rare'},
+  {name:'Herr Beispiel',fach:'Sport',emoji:'🏃',rarity:'common'},
+  {name:'Frau Beispiel',fach:'Englisch',emoji:'🌍',rarity:'common'},
+  {name:'Herr Test',fach:'Physik',emoji:'⚡',rarity:'rare'},
+  {name:'Frau Test',fach:'Biologie',emoji:'🧬',rarity:'common'},
+  {name:'Herr Probe',fach:'Chemie',emoji:'⚗️',rarity:'rare'},
+  {name:'Frau Probe',fach:'Geschichte',emoji:'📜',rarity:'common'},
+  {name:'Herr Demo',fach:'Kunst',emoji:'🎨',rarity:'epic'},
+  {name:'Frau Demo',fach:'Musik',emoji:'🎵',rarity:'common'},
+  {name:'Herr Muster',fach:'Informatik',emoji:'💻',rarity:'epic'},
+  {name:'Frau Platzhalter',fach:'Politik',emoji:'🏛️',rarity:'common'},
   {name:'Schulleitung',fach:'Direktion',emoji:'👑',rarity:'legendary'},
+  {name:'Überraschung',fach:'Geheim',emoji:'🎁',rarity:'mythic'},
   {name:'…',fach:'Folgt noch',emoji:'✨',rarity:'common',comingSoon:true},
 ];
 const RARITY_COLORS={common:'#9AA3A0',rare:'#4A90D9',epic:'#9B4AD9',legendary:'#C8A84B',mythic:'#E04040'};
@@ -1065,7 +1113,6 @@ let gbEntries=[]; // wird aus Supabase geladen
 let adminMode=false;
 let kasseSources=[680,320,240,0];
 let kasseEditMode=false;
-let revealedKarten=new Set();
 let activeRarityFilter=null;
 let lastKassePct=0;
 let karteNumbers={};
@@ -2036,45 +2083,48 @@ function imgViewerNav(dir){
 }
 
 // ── SAMMELKARTEN (Prototyp) ──
-function buildKarteSlot(idx,skipClick){
+function buildKarteSlot(idx){
   const k=LEHRERKARTEN[idx];
   const el=document.createElement('div');
-  el.className='karte-slot'+(revealedKarten.has(idx)?' flipped':'');
+  el.className='karte-slot flipped';
   el.dataset.rarity=k.rarity;
   el.innerHTML=`<div class="karte-inner">
       <div class="karte-face karte-back"><div class="karte-back-mark">🂠</div></div>
-      <div class="karte-face karte-front" style="--rarity-glow:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 14%,transparent)"><button class="karte-zoom-btn" aria-label="Vergrößern" style="position:absolute;top:.4rem;right:.4rem;background:rgba(0,0,0,.35);border:none;border-radius:50%;width:1.8rem;height:1.8rem;font-size:.85rem;cursor:pointer">🔍</button><div class="karte-rarity-badge" style="background:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 55%,transparent)">${RARITY_LABELS[k.rarity]}</div><div class="karte-emoji">${k.emoji}</div><div class="karte-name">${k.name}</div><div class="karte-fach">${k.fach}</div></div>
+      <div class="karte-face karte-front" style="--rarity-glow:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 14%,transparent)">
+        <div class="karte-rarity-badge" style="background:color-mix(in srgb,${RARITY_COLORS[k.rarity]} 55%,transparent)">${RARITY_LABELS[k.rarity]}</div>
+        <div class="karte-emoji">${k.emoji}</div>
+        <div class="karte-name">${k.name}</div>
+        <div class="karte-fach">${k.fach}</div>
+      </div>
     </div>`;
-  if(!skipClick){
-    el.addEventListener('click',()=>{
-      if(!revealedKarten.has(idx)){revealedKarten.add(idx);updateKartenProgress();showToast(k.name+' aufgedeckt ✓');}
-      el.classList.toggle('flipped');
-    });
-    const zoomBtn=el.querySelector('.karte-zoom-btn');
-    if(zoomBtn)zoomBtn.addEventListener('click',(e)=>{e.stopPropagation();openKarteModal(idx);});
-  }
+  if(!k.comingSoon)el.addEventListener('click',()=>openKarteModal(idx));
   return el;
 }
-function renderKartenGrid(){
+function renderKartenGrid(dealt){
   const grid=document.getElementById('kartenGrid');grid.innerHTML='';
+  const q=(document.getElementById('kartenSearch').value||'').toLowerCase().trim();
+  const fach=document.getElementById('kartenFach').value;
+  const filtered=!!(q||fach||activeRarityFilter);
+  let n=0;
   LEHRERKARTEN.forEach((k,i)=>{
-    const slot=buildKarteSlot(i,false);
-    if(activeRarityFilter&&k.rarity!==activeRarityFilter)slot.classList.add('hidden-filter');
+    if(k.comingSoon&&filtered)return;
+    if(activeRarityFilter&&k.rarity!==activeRarityFilter)return;
+    if(fach&&k.fach!==fach)return;
+    if(q&&!(k.name.toLowerCase().includes(q)||k.fach.toLowerCase().includes(q)))return;
+    const slot=buildKarteSlot(i);
+    slot.style.setProperty('--i',n);
     grid.appendChild(slot);
+    if(!k.comingSoon)n++;
   });
-}
-function updateKartenProgress(){
-  const pct=Math.round(revealedKarten.size/LEHRERKARTEN.length*100);
-  document.getElementById('kartenProgressBar').style.width=pct+'%';
-  document.getElementById('kartenProgressLabel').textContent=`${revealedKarten.size} / ${LEHRERKARTEN.length} aufgedeckt`;
+  grid.classList.toggle('deal',dealt===true);
+  document.getElementById('kartenCount').textContent=n===1?'1 Karte':`${n} Karten`;
+  document.getElementById('kartenEmpty').style.display=n?'none':'block';
 }
 function setKartenFilter(r,chipEl){
   activeRarityFilter=r;
   document.querySelectorAll('.karten-legend span').forEach(c=>c.classList.remove('active'));
   chipEl.classList.add('active');
-  document.querySelectorAll('#kartenGrid .karte-slot').forEach(slot=>{
-    slot.classList.toggle('hidden-filter',!!r&&slot.dataset.rarity!==r);
-  });
+  renderKartenGrid();
 }
 function initSammelkarten(){
   const legend=document.getElementById('kartenLegend');
@@ -2090,8 +2140,24 @@ function initSammelkarten(){
     s.addEventListener('click',()=>setKartenFilter(r,s));
     legend.appendChild(s);
   });
+  const sel=document.getElementById('kartenFach');
+  [...new Set(LEHRERKARTEN.filter(k=>!k.comingSoon).map(k=>k.fach))].sort((a,b)=>a.localeCompare(b,'de')).forEach(f=>{
+    const o=document.createElement('option');o.value=f;o.textContent=f;sel.appendChild(o);
+  });
   renderKartenGrid();
-  updateKartenProgress();
+}
+// Pack-Animation: Pack wackelt, Siegel reisst auf, dann fächern sich die Karten ein
+function openKartenOverview(){
+  const pack=document.getElementById('kartenPack');
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const show=()=>{
+    pack.classList.remove('opening');
+    renderKartenGrid(!reduce);
+    openModal('kartenModal');
+  };
+  if(reduce){show();return;}
+  pack.classList.add('opening');
+  setTimeout(show,700);
 }
 function getKarteNumber(idx){
   if(!(idx in karteNumbers)){
